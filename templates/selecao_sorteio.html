@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sorteio 4x4 - Copa Paulista</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: url('/static/img/FUNDO.jpeg') no-repeat center center fixed;
+      background-size: cover;
+      color: #FFFFFF;
+    }
+    header {
+      background-color: rgba(0, 0, 0, 0.8);
+      color: #FFD700;
+      text-align: center;
+      padding: 1.5rem 0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    header h1 { margin: 0; font-size: 2.3rem; }
+
+    .container {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,215,0,.6);
+      background: rgba(255,215,0,.08);
+      color:#FFD700;
+      font-weight: 900;
+    }
+
+    .group { margin-bottom: 34px; }
+    .group h3 {
+      text-align: center;
+      margin-bottom: 14px;
+      font-size: 1.8rem;
+      color: #FFD700;
+    }
+
+    .group-slots {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .team-slot {
+      min-width: 0;
+      height: 56px;
+      border: 1px solid #FFD700;
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 10px;
+      background-color: rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+    }
+    .team-slot span{
+      font-weight: 900;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-right: 8px;
+      min-width: 0;
+    }
+    .team-slot img {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1px solid rgba(255,255,255,.25);
+      background:#fff;
+      flex: 0 0 auto;
+    }
+
+    /* Animation Styles */
+    #team-animation {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(1);
+      z-index: 1000;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.85);
+      border: 3px solid #FFD700;
+      border-radius: 14px;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+      color: #FFFFFF;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0%   { transform: translate(-50%, -50%) scale(1);   box-shadow: 0 0 20px #FFD700; }
+      50%  { transform: translate(-50%, -50%) scale(1.1); box-shadow: 0 0 0px #FFD700; }
+      100% { transform: translate(-50%, -50%) scale(1);   box-shadow: 0 0 20px #FFD700; }
+    }
+
+    .actions {
+      margin-top: 18px;
+      text-align: center;
+      display:flex;
+      justify-content:center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .actions button {
+      padding: 10px 16px;
+      font-size: 15px;
+      font-weight: 900;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .btn-clear   { background:#FF4500; color:#fff; }
+    .btn-clear:hover { filter: brightness(.95); }
+
+    @media (max-width: 900px){
+      .group-slots{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <h1>Copa Paulista</h1>
+</header>
+
+<div class="container">
+  <div class="topbar">
+    <div class="badge" id="dayBadge">Dia: —</div>
+    <div class="badge" style="opacity:.9;border-color:rgba(255,255,255,.18);color:#fff;background:rgba(255,255,255,.08)">
+      Apresentação em tempo real (4x4)
+    </div>
+  </div>
+
+  <div id="designation">
+    <h2 id="titleDay" style="margin:0 0 14px;">Sorteio</h2>
+
+    <div class="group">
+      <h3>Grupo A</h3>
+      <div class="group-slots">
+        <div class="team-slot" id="groupA-1"></div>
+        <div class="team-slot" id="groupA-2"></div>
+        <div class="team-slot" id="groupA-3"></div>
+        <div class="team-slot" id="groupA-4"></div>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3>Grupo B</h3>
+      <div class="group-slots">
+        <div class="team-slot" id="groupB-1"></div>
+        <div class="team-slot" id="groupB-2"></div>
+        <div class="team-slot" id="groupB-3"></div>
+        <div class="team-slot" id="groupB-4"></div>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3>Grupo C</h3>
+      <div class="group-slots">
+        <div class="team-slot" id="groupC-1"></div>
+        <div class="team-slot" id="groupC-2"></div>
+        <div class="team-slot" id="groupC-3"></div>
+        <div class="team-slot" id="groupC-4"></div>
+      </div>
+    </div>
+
+    <!-- ✅ Grupo D removido (agora são só 12 slots) -->
+  </div>
+<!--
+  <div class="actions">
+   <button class="btn-clear" onclick="clearBracket()">Limpar e Recomeçar</button> 
+  </div>--> 
+</div>
+
+<div id="team-animation"></div>
+
+<script>
+  let animationQueue = [];
+  let isAnimating = false;
+
+  // ✅ 12 slots (A/B/C) - sem Grupo D
+  const slotIds = [
+    "groupA-1","groupA-2","groupA-3","groupA-4",
+    "groupB-1","groupB-2","groupB-3","groupB-4",
+    "groupC-1","groupC-2","groupC-3","groupC-4"
+  ];
+
+  // slots legados (Grupo D) pra limpar estado antigo, se existir
+  const legacySlotIds = ["groupD-1","groupD-2","groupD-3","groupD-4"];
+
+  function dayKey(){
+    const raw =
+      localStorage.getItem("currentDay") ||
+      localStorage.getItem("cupActiveDay") ||
+      "sabado";
+
+    return String(raw).trim().toLowerCase();
+  }
+
+  function dayLabel(day){
+    return day === "domingo" ? "Domingo" : "Sabado";
+  }
+
+  function slotKey(slotId){
+    return `slot-${dayKey()}-${slotId}`;
+  }
+
+  function paintDayUI(){
+    const day = dayKey();
+    document.getElementById("dayBadge").textContent = `Dia: ${dayLabel(day)}`;
+    document.getElementById("titleDay").textContent = `Sorteio ${dayLabel(day)}`;
+  }
+
+  function renderAllSlots(){
+    slotIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+
+      const raw = localStorage.getItem(slotKey(id));
+      if (!raw) {
+        el.innerHTML = `<span style="opacity:.75;">—</span>`;
+        return;
+      }
+
+      try {
+        const team = JSON.parse(raw);
+        el.innerHTML = `<span title="${team.name}">${team.name}</span><img src="${team.logo}" alt="${team.name}">`;
+      } catch {
+        el.innerHTML = `<span style="opacity:.75;">—</span>`;
+      }
+    });
+  }
+
+  function playNextAnimation(){
+    if (isAnimating || animationQueue.length === 0) return;
+
+    const team = animationQueue.shift();
+    isAnimating = true;
+
+    const animationElement = document.getElementById("team-animation");
+    animationElement.style.display = "block";
+    animationElement.innerHTML = `
+      <h2 style="margin:0 0 10px;color:#FFD700;">${team.name}</h2>
+      <img src="${team.logo}" alt="${team.name}" style="width:300px;height:300px;border-radius:50%;object-fit:cover;border:2px solid #FFD700;background:#fff;">
+    `;
+
+    setTimeout(() => {
+      animationElement.style.display = "none";
+      isAnimating = false;
+      playNextAnimation();
+    }, 2000);
+  }
+
+  window.addEventListener("storage", (e) => {
+    if (!e.key) return;
+
+    if (e.key === "currentDay" || e.key === "cupActiveDay") {
+      paintDayUI();
+      renderAllSlots();
+      return;
+    }
+
+    const prefix = `slot-${dayKey()}-`;
+    if (e.key.startsWith(prefix)) {
+      // só anima se for slot válido (A/B/C)
+      const slotId = e.key.slice(prefix.length);
+      if (!slotIds.includes(slotId)) return;
+
+      renderAllSlots();
+      if (!e.oldValue && e.newValue) {
+        try {
+          animationQueue.push(JSON.parse(e.newValue));
+          playNextAnimation();
+        } catch {}
+      }
+    }
+  });
+
+  function clearBracket(){
+    if (!confirm(`Limpar seleção do ${dayLabel(dayKey())}?`)) return;
+
+    // limpa slots atuais
+    slotIds.forEach(id => localStorage.removeItem(slotKey(id)));
+
+    // limpa slots legados (grupo D), se existirem
+    legacySlotIds.forEach(id => localStorage.removeItem(slotKey(id)));
+
+    // limpa pacote de designação do dia (se usado por outras telas)
+    localStorage.removeItem(`designation-${dayKey()}`);
+
+    renderAllSlots();
+  }
+
+  // init
+  paintDayUI();
+
+  // limpeza preventiva do legado (grupo D) ao abrir
+  legacySlotIds.forEach(id => localStorage.removeItem(slotKey(id)));
+
+  renderAllSlots();
+
+  // fallback (caso alguma aba não dispare storage)
+  setInterval(() => {
+    paintDayUI();
+    renderAllSlots();
+  }, 800);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Seleção 4x4 - Campeonato</title>
+
+  <style>
+    :root{
+      --bg0:#0b1020;
+      --bg1:#0f1733;
+      --card: rgba(255,255,255,.08);
+      --card2: rgba(255,255,255,.10);
+      --stroke: rgba(255,255,255,.14);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.70);
+
+      --gold:#FFD700;
+      --gold2:#ffea7a;
+
+      --blue:#3b82f6;
+      --blue2:#2563eb;
+
+      --green:#22c55e;
+      --red:#ef4444;
+      --gray:#64748b;
+      --amber:#f59e0b;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;
+      color:var(--text);
+      min-height:100vh;
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(59,130,246,.28), transparent 60%),
+        radial-gradient(900px 500px at 90% 0%, rgba(255,215,0,.18), transparent 60%),
+        radial-gradient(1000px 600px at 50% 110%, rgba(34,197,94,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+    }
+
+    header{
+      position:sticky;
+      top:0;
+      z-index:10;
+      padding:18px 14px;
+      background: rgba(0,0,0,.45);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+    .brand{
+      max-width:1180px;
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .brand h1{
+      margin:0;
+      font-size: 1.55rem;
+      letter-spacing:.2px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,215,0,.55);
+      background: rgba(255,215,0,.08);
+      color: var(--gold2);
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .pill small{ color:rgba(255,255,255,.75); font-weight:800; }
+
+    .container{
+      max-width:1180px;
+      margin: 18px auto 28px;
+      padding: 0 14px;
+    }
+    .panel{
+      background: var(--card);
+      border:1px solid var(--stroke);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 18px 45px rgba(0,0,0,.35);
+      overflow:hidden;
+      margin-bottom: 14px;
+    }
+    .panelHeader{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom: 14px;
+    }
+    .panelHeader h2{
+      margin:0;
+      font-size: 1.2rem;
+      letter-spacing:.2px;
+    }
+    .panelHeader p{
+      margin:6px 0 0;
+      color: var(--muted);
+      max-width: 760px;
+      line-height: 1.35;
+    }
+    .panelHeader .right{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+
+    .btn{
+      border:0;
+      cursor:pointer;
+      padding: 11px 14px;
+      border-radius: 12px;
+      font-weight:900;
+      color:#fff;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.14);
+      transition: transform .12s ease, filter .12s ease, background .12s ease;
+      box-shadow: 0 10px 22px rgba(0,0,0,.22);
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      user-select:none;
+    }
+    .btn:hover{ transform: translateY(-1px); filter: brightness(1.03); }
+    .btn:active{ transform: translateY(0px) scale(.99); }
+    .btn-primary{ background: linear-gradient(180deg, var(--blue), var(--blue2)); border: 1px solid rgba(59,130,246,.45); }
+    .btn-success{ background: linear-gradient(180deg, #2dd46a, #16a34a); border: 1px solid rgba(34,197,94,.45); }
+    .btn-danger{ background: linear-gradient(180deg, #ff5a5a, #dc2626); border: 1px solid rgba(239,68,68,.45); }
+    .btn-muted{ background: rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.14); color: rgba(255,255,255,.9); }
+    .btn-amber{ background: linear-gradient(180deg, #ffcc66, #f59e0b); border:1px solid rgba(245,158,11,.5); color:#1a1a1a; }
+    .btn-ghost{ background: transparent; border:1px solid rgba(255,255,255,.16); color: rgba(255,255,255,.88); box-shadow:none; }
+    .btn-sm{ padding: 9px 10px; border-radius: 12px; font-size: 13px; box-shadow:none; }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    @media (max-width: 980px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    .hint{
+      margin-top: 10px;
+      color: rgba(255,255,255,.72);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .progressText{
+      margin: 10px 0 0;
+      color: rgba(255,255,255,.75);
+      font-size: 13px;
+      line-height: 1.35;
+      font-weight: 800;
+    }
+
+    .matchBox{
+      display:grid;
+      grid-template-columns: minmax(0,1fr) auto minmax(0,1fr);
+      gap: 12px;
+      align-items:center;
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      overflow:hidden;
+    }
+    .team{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+    .team img{
+      width:44px; height:44px;
+      border-radius: 999px;
+      object-fit:cover;
+      border: 1px solid rgba(255,255,255,.16);
+      background:#fff;
+    }
+    .team span{
+      font-weight: 950;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 420px;
+    }
+    .vs{
+      font-weight: 950;
+      color: var(--gold2);
+      letter-spacing: 2px;
+      text-align:center;
+      white-space:nowrap;
+    }
+
+    .matchLine{
+      display:grid;
+      grid-template-columns: minmax(0,1fr) auto minmax(0,1fr) auto;
+      gap: 10px;
+      align-items:center;
+      padding: 10px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.06);
+      border: 1px dashed rgba(255,255,255,.18);
+      margin-bottom: 10px;
+      overflow:hidden;
+    }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 12px;
+      font-weight: 950;
+      padding: 6px 10px;
+      border-radius: 999px;
+      white-space:nowrap;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.88);
+      justify-self:end;
+    }
+    .tag-win{
+      background: rgba(34,197,94,.14);
+      border-color: rgba(34,197,94,.35);
+      color: rgba(220,252,231,.95);
+    }
+    .tag-lose{
+      background: rgba(239,68,68,.14);
+      border-color: rgba(239,68,68,.35);
+      color: rgba(254,226,226,.95);
+    }
+    .tag-info{
+      background: rgba(59,130,246,.14);
+      border-color: rgba(59,130,246,.35);
+      color: rgba(219,234,254,.95);
+    }
+
+    .pool{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+      margin: 12px 0 14px;
+    }
+    .poolItem{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 9px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      cursor:pointer;
+      transition: transform .12s ease, filter .12s ease, background .12s ease;
+      max-width: 100%;
+      user-select:none;
+    }
+    .poolItem:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.09);
+    }
+    .poolItem img{
+      width:28px; height:28px;
+      border-radius: 999px;
+      object-fit:cover;
+      border: 1px solid rgba(255,255,255,.16);
+      background:#fff;
+    }
+    .poolItem span{
+      font-weight: 950;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 240px;
+    }
+    .poolItem.selected{
+      outline: 3px solid rgba(255,215,0,.22);
+      border-color: rgba(255,215,0,.35);
+    }
+
+    .slotBtn{
+      width: 100%;
+      min-width: 0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.14);
+      cursor:pointer;
+      transition: transform .12s ease, filter .12s ease, background .12s ease;
+      overflow:hidden;
+    }
+    .slotBtn:hover{ transform: translateY(-1px); background: rgba(0,0,0,.22); }
+    .slotBtn.empty{ color: rgba(255,255,255,.70); }
+    .slotBtn.disabled{
+      opacity:.65;
+      cursor:not-allowed;
+      transform:none !important;
+    }
+
+    .slotRightTag{
+      font-size: 12px;
+      font-weight: 950;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,215,0,.10);
+      border:1px solid rgba(255,215,0,.30);
+      color: var(--gold2);
+      white-space:nowrap;
+      flex-shrink:0;
+    }
+
+    .championCard{
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(34,197,94,.10);
+      border: 1px solid rgba(34,197,94,.35);
+      box-shadow: 0 18px 45px rgba(0,0,0,.25);
+    }
+    .championCard h3{
+      margin:0 0 10px;
+      color: rgba(220,252,231,.95);
+      letter-spacing:.2px;
+    }
+
+    @media (max-width: 760px){
+      .matchBox{ grid-template-columns: 1fr; }
+      .matchLine{ grid-template-columns: 1fr; }
+      .tag{ justify-self:start; }
+      .vs{ justify-self:center; }
+      .team span{ max-width: 100%; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="brand">
+      <h1>⚔️ Seleção 4x4 — Campeonato</h1>
+      <div class="pill" id="dayPill">Dia: <small>—</small></div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- PARTIDA ATUAL -->
+    <div class="panel">
+      <div class="panelHeader">
+        <div>
+          <h2>Partida atual</h2>
+          <p>Marque o vencedor para avançar. Com 12 slots: Fase 1 (6 jogos) → Semifinal (2 jogos) → Final (1 jogo).</p>
+        </div>
+        <div class="right">
+          <button class="btn btn-ghost" onclick="goBackMenu()">🏠 Menu</button>
+          <button class="btn btn-ghost" onclick="goToSelection()">↩️ Seleção 4x4</button>
+        </div>
+      </div>
+
+      <div id="currentMatch" class="matchBox"></div>
+      <div id="progressText" class="progressText"></div>
+
+      <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-muted" onclick="openPresentation()">🖥️ Apresentação</button>
+        <button class="btn btn-danger" onclick="resetCup()">🔁 Reiniciar Campeonato (Seleção)</button>
+      </div>
+
+      <div class="hint">Dica: reiniciar zera somente os resultados do campeonato 4x4 do dia atual (mantém a seleção 4x4).</div>
+    </div>
+
+    <!-- GRID FASES -->
+    <div class="grid2">
+
+      <div class="panel">
+        <div class="panelHeader">
+          <div>
+            <h2>1ª Fase (12 times • 6 jogos) — pares fixos</h2>
+            <p>Confrontos gerados automaticamente a partir dos 12 slots salvos na seleção.</p>
+          </div>
+        </div>
+        <div id="phase1"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panelHeader">
+          <div>
+            <h2>Semifinal (2 jogos) — montar confrontos</h2>
+            <p>Vencedores da 1ª fase aparecem no pool. Selecione no pool e clique nos slots A/B.</p>
+          </div>
+        </div>
+
+        <div id="pool2" class="pool"></div>
+        <div id="phase2"></div>
+      </div>
+
+    </div>
+
+    <div class="grid2">
+
+      <div class="panel">
+        <div class="panelHeader">
+          <div>
+            <h2>Final (1 jogo) — montar confronto</h2>
+            <p>Vencedores da semifinal aparecem no pool.</p>
+          </div>
+        </div>
+
+        <div id="pool3" class="pool"></div>
+        <div id="phase3"></div>
+        <div id="championBox"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panelHeader">
+          <div>
+            <h2>Resumo</h2>
+            <p>Visualização dos confrontos e vencedores.</p>
+          </div>
+        </div>
+        <div class="hint">
+          • Estrutura com 12 slots: <strong>6 jogos</strong> → <strong>2 jogos</strong> → <strong>1 jogo</strong>.<br>
+          • Se você ainda tiver estados antigos (16 slots), limpe os slots/estado do dia para evitar conflito.
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+<script>
+  // =======================
+  // CONFIG (rotas)
+  // =======================
+  const ROUTE_MENU = "/";
+  const ROUTE_SELECAO = "/selecao";
+  const ROUTE_PRESENTATION = "/selecao_fases";
+
+  // =======================
+  // DIA (sábado/domingo)
+  // =======================
+  function dayKey(){
+    const raw =
+      localStorage.getItem("currentDay") ||
+      localStorage.getItem("cup4ActiveDay") ||
+      localStorage.getItem("cupActiveDay") ||
+      "sabado";
+    return String(raw).trim().toLowerCase();
+  }
+  function dayLabel(day){
+    return day === "domingo" ? "Domingo" : "Sabado";
+  }
+  function paintDayUI(){
+    document.getElementById("dayPill").innerHTML = `Dia: <small>${dayLabel(dayKey())}</small>`;
+  }
+
+  // =======================
+  // STORAGE KEYS (SELEÇÃO 4x4)
+  // =======================
+  function stateKey(){ return `cup4State-${dayKey()}`; }
+  function pingKey(){ return "cup4LastUpdate"; }
+
+  // ✅ 12 slots (mesmo padrão da sua seleção 12-slots):
+  // 6 na Chave A + 6 na Chave B (IDs iguais ao times.html 12 slots)
+  // ✅ 12 slots (mesmo padrão do seu times.html: groupA/B/C)
+  const selectionSlotIds = [
+    "groupA-1","groupA-2","groupA-3","groupA-4",
+    "groupB-1","groupB-2","groupB-3","groupB-4",
+    "groupC-1","groupC-2","groupC-3","groupC-4"
+  ];
+
+
+  function slotKey(slotId){ return `slot-${dayKey()}-${slotId}`; }
+  function designationKey(){ return `designation-${dayKey()}`; }
+
+  // =======================
+  // 1ª FASE: 6 PARES FIXOS (12 times)
+  // =======================
+  // ✅ 1ª FASE: 6 PARES FIXOS (12 times)
+  const round1PairsMap = [
+    { label: "Grupo A • Jogo 1", a: "groupA-1", b: "groupA-2" },
+    { label: "Grupo A • Jogo 2", a: "groupA-3", b: "groupA-4" },
+
+    { label: "Grupo B • Jogo 1", a: "groupB-1", b: "groupB-2" },
+    { label: "Grupo B • Jogo 2", a: "groupB-3", b: "groupB-4" },
+
+    { label: "Grupo C • Jogo 1", a: "groupC-1", b: "groupC-2" },
+    { label: "Grupo C • Jogo 2", a: "groupC-3", b: "groupC-4" }
+  ];
+
+  // =======================
+  // UTIL
+  // =======================
+  let selectedPool = { phase: null, teamId: null };
+
+  function teamId(t){
+    return btoa(unescape(encodeURIComponent(`${t.name}||${t.logo}`)));
+  }
+
+  function teamHtml(t){
+    if (!t) return `<div class="team"><span>—</span></div>`;
+    return `
+      <div class="team">
+        <img src="${t.logo}" alt="${t.name}">
+        <span title="${t.name}">${t.name}</span>
+      </div>`;
+  }
+
+  function initMatches(n){
+    return Array.from({ length: n }, () => ({ a:null, b:null, winner:null, loser:null }));
+  }
+
+  // =======================
+  // CARREGAR SELEÇÃO (12 SLOTS)
+  // =======================
+  function getSelectionObject(){
+    // preferência: pacote designation-<dia> (igual times.html)
+    const packed = localStorage.getItem(designationKey());
+    if (packed){
+      try{
+        const obj = JSON.parse(packed);
+        if (obj && typeof obj === "object") return obj;
+      }catch{}
+    }
+
+    // fallback: slots individuais slot-<dia>-<id>
+    const obj = {};
+    for (const sid of selectionSlotIds){
+      const raw = localStorage.getItem(slotKey(sid));
+      if (!raw) continue;
+      try{ obj[sid] = JSON.parse(raw); }catch{}
+    }
+    return obj;
+  }
+
+  function getInitialTeamsRound1(){
+    const sel = getSelectionObject();
+
+    const pairs = round1PairsMap.map(m => [sel[m.a] || null, sel[m.b] || null]);
+
+    if (pairs.some(p => !p[0] || !p[1] || !p[0].name || !p[1].name)){
+      alert(`Confrontos não estão completos para ${dayLabel(dayKey())}.
+Volte na Seleção (12 slots) e preencha todos os 12 slots antes de iniciar o campeonato.`);
+      window.location.href = ROUTE_SELECAO;
+      return null;
+    }
+    return pairs;
+  }
+
+  // =======================
+  // STATE (12 SLOTS)
+  // =======================
+  function loadState(){
+    const saved = localStorage.getItem(stateKey());
+    if (saved){
+      try{
+        const parsed = JSON.parse(saved);
+
+        // ✅ migração defensiva: se era estado antigo (phase4 etc.), converte/ajusta para 3 fases
+        if (parsed && typeof parsed === "object") {
+          if (!parsed.phase3 && parsed.phase4) {
+            // tenta reaproveitar final antiga
+            parsed.phase3 = parsed.phase4;
+          }
+          delete parsed.phase4;
+          if (typeof parsed.phase === "number" && parsed.phase > 3 && !parsed.champion) parsed.phase = 3;
+          localStorage.setItem(stateKey(), JSON.stringify(parsed));
+          return parsed;
+        }
+      }catch{}
+    }
+
+    const round1Pairs = getInitialTeamsRound1();
+    if (!round1Pairs) return null;
+
+    const state = {
+      phase: 1,
+      p1Index: 0,
+
+      // fase 1: 6 jogos
+      phase1: {
+        pairs: round1Pairs,
+        labels: round1PairsMap.map(x => x.label),
+        results: Array(6).fill(null).map(()=>({ winner:null, loser:null }))
+      },
+
+      // semifinal: 2 jogos
+      phase2: { pool: [], matches: initMatches(2) },
+
+      // final: 1 jogo
+      phase3: { pool: [], matches: initMatches(1) },
+
+      champion: null
+    };
+
+    saveState(state);
+    return state;
+  }
+
+  function saveState(state){
+    const day = dayKey();
+    localStorage.setItem("cup4ActiveDay", day);
+    localStorage.setItem(stateKey(), JSON.stringify(state));
+    localStorage.setItem(pingKey(), String(Date.now()));
+  }
+
+  // =======================
+  // POOL + SLOTS RENDER
+  // =======================
+  function poolItemHtml(phase, t){
+    const id = teamId(t);
+    const isSel = selectedPool.phase === phase && selectedPool.teamId === id;
+    return `
+      <div class="poolItem ${isSel ? "selected" : ""}" onclick="selectFromPool(${phase}, '${id}')">
+        <img src="${t.logo}" alt="${t.name}">
+        <span title="${t.name}">${t.name}</span>
+      </div>`;
+  }
+
+  function renderPool(state, phase){
+    const poolEl = document.getElementById(`pool${phase}`);
+    const key = `phase${phase}`;
+    const pool = state[key].pool || [];
+
+    const used = new Set();
+    state[key].matches.forEach(m => {
+      if (m.a) used.add(teamId(m.a));
+      if (m.b) used.add(teamId(m.b));
+    });
+
+    const available = pool.filter(t => !used.has(teamId(t)));
+
+    poolEl.innerHTML = available.length
+      ? available.map(t => poolItemHtml(phase, t)).join("")
+      : `<div class="hint">Sem times disponíveis.</div>`;
+  }
+
+  function renderMatchSlots(phase, matchIndex, match){
+    const aHtml = match.a ? teamHtml(match.a) : `<div class="team"><span>— Selecione um time</span></div>`;
+    const bHtml = match.b ? teamHtml(match.b) : `<div class="team"><span>— Selecione um time</span></div>`;
+    const disabled = match.winner ? "disabled" : "";
+
+    return `
+      <div class="matchLine">
+        <div class="slotBtn ${match.a ? "" : "empty"} ${disabled}" onclick="toggleSlot(${phase}, ${matchIndex}, 'a')">
+          ${aHtml}
+          <span class="slotRightTag">A</span>
+        </div>
+
+        <div class="vs">VS</div>
+
+        <div class="slotBtn ${match.b ? "" : "empty"} ${disabled}" onclick="toggleSlot(${phase}, ${matchIndex}, 'b')">
+          ${bHtml}
+          <span class="slotRightTag">B</span>
+        </div>
+
+        ${
+          match.winner
+            ? `<span class="tag tag-win">Vencedor: ${match.winner.name}</span>`
+            : (match.a && match.b
+                ? `<span class="tag tag-info">Pronto</span>`
+                : `<span class="tag">Montar</span>`)
+        }
+      </div>`;
+  }
+
+  function renderPhases(state){
+    // fase 1
+    const p1 = document.getElementById("phase1");
+    p1.innerHTML = state.phase1.pairs.map((pair, i) => {
+      const res = state.phase1.results[i];
+      const win = res?.winner;
+      const lose = res?.loser;
+      const label = state.phase1.labels?.[i] || `Jogo ${i+1}`;
+
+      return `
+        <div class="matchLine">
+          ${teamHtml(pair[0])}
+          <div class="vs">VS</div>
+          ${teamHtml(pair[1])}
+          ${
+            win
+              ? `<span class="tag tag-win">${label} • Venceu: ${win.name}</span>
+                 <span class="tag tag-lose">Perdeu: ${lose.name}</span>`
+              : `<span class="tag">${label} • Aguardando</span>`
+          }
+        </div>`;
+    }).join("");
+
+    // semifinal (phase2)
+    document.getElementById("phase2").innerHTML =
+      state.phase2.matches.map((m, idx) => renderMatchSlots(2, idx, m)).join("");
+
+    // final (phase3)
+    document.getElementById("phase3").innerHTML =
+      state.phase3.matches.map((m, idx) => renderMatchSlots(3, idx, m)).join("");
+
+    renderPool(state, 2);
+    renderPool(state, 3);
+
+    const championBox = document.getElementById("championBox");
+    championBox.innerHTML = state.champion
+      ? `
+        <div class="championCard">
+          <h3>🏆 Campeão</h3>
+          <div class="matchBox">${teamHtml(state.champion)}</div>
+        </div>
+      `
+      : "";
+  }
+
+  // =======================
+  // PARTIDA ATUAL
+  // =======================
+  function currentMatchForPhase(state, phase){
+    const key = `phase${phase}`;
+    const matches = state[key].matches;
+    return matches.findIndex(m => !m.winner);
+  }
+
+  function renderCurrentMatch(state){
+    const box = document.getElementById("currentMatch");
+    const txt = document.getElementById("progressText");
+
+    if (state.champion){
+      box.innerHTML = `<div style="font-weight:950;">Campeonato finalizado ✅</div>`;
+      txt.textContent = "";
+      return;
+    }
+
+    // fase 1
+    if (state.phase === 1){
+      const i = state.p1Index;
+      const pair = state.phase1.pairs[i];
+      const total = 6;
+      const label = state.phase1.labels?.[i] || `Jogo ${i+1}`;
+
+      txt.textContent = `1ª Fase — ${label} (Partida ${i+1} de ${total})`;
+
+      box.innerHTML = `
+        ${teamHtml(pair[0])}
+        <div class="vs">VS</div>
+        ${teamHtml(pair[1])}
+        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+          <button class="btn btn-success btn-sm" onclick="setWinnerPhase1(0)">Venceu</button>
+          <button class="btn btn-success btn-sm" onclick="setWinnerPhase1(1)">Venceu</button>
+        </div>
+      `;
+      return;
+    }
+
+    // semifinal/final
+    const idx = currentMatchForPhase(state, state.phase);
+    const key = `phase${state.phase}`;
+    const match = state[key].matches[idx];
+
+    const label =
+      state.phase === 2 ? "Semifinal" :
+      state.phase === 3 ? "Final" :
+      `Fase ${state.phase}`;
+
+    txt.textContent = `${label} — Confronto ${idx + 1}`;
+
+    if (!match || !match.a || !match.b){
+      box.innerHTML = `<div style="font-weight:950;">Monte os confrontos da ${label} (pool → slots A e B).</div>`;
+      return;
+    }
+
+    box.innerHTML = `
+      ${teamHtml(match.a)}
+      <div class="vs">VS</div>
+      ${teamHtml(match.b)}
+      <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+        <button class="btn btn-success btn-sm" onclick="setWinnerManual(${state.phase}, ${idx}, 'a')">Venceu</button>
+        <button class="btn btn-success btn-sm" onclick="setWinnerManual(${state.phase}, ${idx}, 'b')">Venceu</button>
+      </div>
+    `;
+  }
+
+  // =======================
+  // AÇÕES
+  // =======================
+  function selectFromPool(phase, id){
+    if (selectedPool.phase === phase && selectedPool.teamId === id){
+      selectedPool = { phase:null, teamId:null };
+    } else {
+      selectedPool = { phase, teamId:id };
+    }
+    rerender(loadState());
+  }
+
+  function toggleSlot(phase, matchIndex, side){
+    const state = loadState();
+    if (!state) return;
+
+    const key = `phase${phase}`;
+    const match = state[key].matches[matchIndex];
+    if (match.winner) return;
+
+    if (match[side]){
+      match[side] = null;
+      saveState(state);
+      rerender(state);
+      return;
+    }
+
+    if (selectedPool.phase !== phase || !selectedPool.teamId){
+      alert("Selecione um time do pool antes de preencher o slot.");
+      return;
+    }
+
+    const poolTeam = (state[key].pool || []).find(t => teamId(t) === selectedPool.teamId);
+    if (!poolTeam){
+      alert("Time não encontrado no pool desta fase.");
+      return;
+    }
+
+    const id = selectedPool.teamId;
+    const alreadyUsed = state[key].matches.some(m =>
+      (m.a && teamId(m.a) === id) || (m.b && teamId(m.b) === id)
+    );
+    if (alreadyUsed){
+      alert("Este time já foi usado em outro confronto desta fase.");
+      return;
+    }
+
+    match[side] = poolTeam;
+    selectedPool = { phase:null, teamId:null };
+
+    saveState(state);
+    rerender(state);
+  }
+
+  function setWinnerPhase1(winnerIdx){
+    const state = loadState();
+    if (!state || state.phase !== 1) return;
+
+    const i = state.p1Index;
+    const pair = state.phase1.pairs[i];
+
+    const winner = pair[winnerIdx];
+    const loser  = pair[winnerIdx === 0 ? 1 : 0];
+
+    state.phase1.results[i] = { winner, loser };
+    state.phase2.pool.push(winner);
+
+    state.p1Index++;
+    if (state.p1Index >= 6) state.phase = 2; // ✅ 6 jogos
+
+    saveState(state);
+    rerender(state);
+  }
+
+  function setWinnerManual(phase, matchIndex, side){
+    const state = loadState();
+    if (!state || state.phase !== phase) return;
+
+    const key = `phase${phase}`;
+    const match = state[key].matches[matchIndex];
+    if (!match || !match.a || !match.b || match.winner) return;
+
+    const winner = side === "a" ? match.a : match.b;
+    const loser  = side === "a" ? match.b : match.a;
+
+    match.winner = winner;
+    match.loser  = loser;
+
+    if (phase === 2) state.phase3.pool.push(winner); // semifinal -> final pool
+    if (phase === 3) state.champion = winner;        // final -> campeão
+
+    if (phase < 3){
+      const allDone = state[key].matches.every(m => m.winner);
+      if (allDone) state.phase = phase + 1;
+    }
+
+    saveState(state);
+    rerender(state);
+  }
+
+  function rerender(state){
+    renderPhases(state);
+    renderCurrentMatch(state);
+  }
+
+  // =======================
+  // NAV / UTILS
+  // =======================
+  function goBackMenu(){ window.location.href = ROUTE_MENU; }
+  function goToSelection(){ window.location.href = ROUTE_SELECAO; }
+
+  let presentationWindow = null;
+  function openPresentation(){
+    localStorage.setItem("cup4ActiveDay", dayKey());
+    const url = ROUTE_PRESENTATION;
+
+    if (presentationWindow && !presentationWindow.closed){
+      presentationWindow.focus();
+      return;
+    }
+    presentationWindow = window.open(
+      url,
+      "selecao_fases",
+      "width=1280,height=720,menubar=0,toolbar=0,location=0,status=0"
+    );
+  }
+
+  function resetCup(){
+    if (!confirm(`Reiniciar campeonato da Seleção (${dayLabel(dayKey())})?\n(Mantém a seleção 4x4; zera resultados.)`)) return;
+    localStorage.removeItem(stateKey());
+    localStorage.removeItem(pingKey());
+    selectedPool = { phase:null, teamId:null };
+
+    const st = loadState();
+    if (st) rerender(st);
+  }
+
+  // =======================
+  // REALTIME
+  // =======================
+  window.addEventListener("storage", (e) => {
+    if (!e.key) return;
+
+    if (e.key === "currentDay" || e.key === "cup4ActiveDay"){
+      paintDayUI();
+      const st = loadState();
+      if (st) rerender(st);
+      return;
+    }
+
+    if (e.key === stateKey() || e.key === pingKey()){
+      const st = loadState();
+      if (st) rerender(st);
+    }
+  });
+
+  // init
+  paintDayUI();
+  const state = loadState();
+  if (state) rerender(state);
+</script>
+</body>
+</html>

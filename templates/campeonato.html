@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Campeonato - Copa Paulista</title>
+
+  <style>
+    :root{
+      --bg0:#0b1020;
+      --bg1:#0f1733;
+      --card: rgba(255,255,255,.08);
+      --stroke: rgba(255,255,255,.14);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.70);
+
+      --gold:#FFD700;
+      --gold2:#ffea7a;
+
+      --blue:#3b82f6;
+      --blue2:#2563eb;
+
+      --green:#22c55e;
+      --red:#ef4444;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;
+      color:var(--text);
+      min-height:100vh;
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(59,130,246,.28), transparent 60%),
+        radial-gradient(900px 500px at 90% 0%, rgba(255,215,0,.18), transparent 60%),
+        radial-gradient(1000px 600px at 50% 110%, rgba(34,197,94,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+    }
+
+    header{
+      position:sticky;
+      top:0;
+      z-index:10;
+      padding:18px 14px;
+      background: rgba(0,0,0,.45);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+    .brand{
+      max-width:1180px;
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .brand h1{
+      margin:0;
+      font-size: 1.55rem;
+      letter-spacing:.2px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,215,0,.55);
+      background: rgba(255,215,0,.08);
+      color: var(--gold2);
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .pill small{ color:rgba(255,255,255,.75); font-weight:800; }
+
+    .container{
+      max-width:1180px;
+      margin: 18px auto 28px;
+      padding: 0 14px;
+    }
+    .panel{
+      background: var(--card);
+      border:1px solid var(--stroke);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 18px 45px rgba(0,0,0,.35);
+      overflow:hidden;
+      margin-bottom: 14px;
+    }
+
+    .panelHeader{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom: 14px;
+    }
+    .panelHeader h2{
+      margin:0;
+      font-size: 1.2rem;
+      letter-spacing:.2px;
+    }
+    .panelHeader p{
+      margin:6px 0 0;
+      color: var(--muted);
+      max-width: 760px;
+      line-height: 1.35;
+    }
+    .panelHeader .right{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+
+    .btn{
+      border:0;
+      cursor:pointer;
+      padding: 11px 14px;
+      border-radius: 12px;
+      font-weight:900;
+      color:#fff;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.14);
+      transition: transform .12s ease, filter .12s ease, background .12s ease;
+      box-shadow: 0 10px 22px rgba(0,0,0,.22);
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .btn:hover{ transform: translateY(-1px); filter: brightness(1.03); }
+    .btn:active{ transform: translateY(0px) scale(.99); }
+
+    .btn-success{ background: linear-gradient(180deg, #2dd46a, #16a34a); border: 1px solid rgba(34,197,94,.45); }
+    .btn-danger{ background: linear-gradient(180deg, #ff5a5a, #dc2626); border: 1px solid rgba(239,68,68,.45); }
+    .btn-muted{ background: rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.14); color: rgba(255,255,255,.9); }
+    .btn-ghost{ background: transparent; border:1px solid rgba(255,255,255,.16); color: rgba(255,255,255,.88); box-shadow:none; }
+    .btn-sm{ padding: 9px 10px; border-radius: 12px; font-size: 13px; box-shadow:none; }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    @media (max-width: 980px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    .hint{
+      margin-top: 10px;
+      color: rgba(255,255,255,.72);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .matchBox{
+      display:grid;
+      grid-template-columns: minmax(0,1fr) auto minmax(0,1fr);
+      gap: 12px;
+      align-items:center;
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      overflow:hidden;
+    }
+
+    .team{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+    .team img{
+      width:44px; height:44px;
+      border-radius: 999px;
+      object-fit:cover;
+      border: 1px solid rgba(255,255,255,.16);
+      background:#fff;
+    }
+    .team span{
+      font-weight: 950;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 420px;
+    }
+    .vs{
+      font-weight: 950;
+      color: var(--gold2);
+      letter-spacing: 2px;
+      text-align:center;
+      white-space:nowrap;
+    }
+
+    .progressText{
+      margin: 10px 0 0;
+      color: rgba(255,255,255,.75);
+      font-size: 13px;
+      line-height: 1.35;
+      font-weight: 800;
+    }
+
+    .matchLine{
+      display:grid;
+      grid-template-columns: minmax(0,1fr) auto minmax(0,1fr) auto;
+      gap: 10px;
+      align-items:center;
+      padding: 10px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.06);
+      border: 1px dashed rgba(255,255,255,.18);
+      margin-bottom: 10px;
+      overflow:hidden;
+    }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 12px;
+      font-weight: 950;
+      padding: 6px 10px;
+      border-radius: 999px;
+      white-space:nowrap;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.88);
+      justify-self:end;
+    }
+    .tag-win{
+      background: rgba(34,197,94,.14);
+      border-color: rgba(34,197,94,.35);
+      color: rgba(220,252,231,.95);
+    }
+    .tag-lose{
+      background: rgba(239,68,68,.14);
+      border-color: rgba(239,68,68,.35);
+      color: rgba(254,226,226,.95);
+    }
+    .tag-info{
+      background: rgba(59,130,246,.14);
+      border-color: rgba(59,130,246,.35);
+      color: rgba(219,234,254,.95);
+    }
+
+    .pool{
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+      margin: 12px 0 14px;
+    }
+    .poolItem{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 9px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      cursor:pointer;
+      transition: transform .12s ease, filter .12s ease, background .12s ease;
+      max-width: 100%;
+      user-select:none;
+    }
+    .poolItem:hover{
+      transform: translateY(-1px);
+      background: rgba(255,255,255,.09);
+    }
+    .poolItem img{
+      width:28px; height:28px;
+      border-radius: 999px;
+      object-fit:cover;
+      border: 1px solid rgba(255,255,255,.16);
+      background:#fff;
+    }
+    .poolItem span{
+      font-weight: 950;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 240px;
+    }
+    .poolItem.selected{
+      outline: 3px solid rgba(255,215,0,.22);
+      border-color: rgba(255,215,0,.35);
+    }
+
+    .slotBtn{
+      width: 100%;
+      min-width: 0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.14);
+      cursor:pointer;
+      transition: transform .12s ease, filter .12s ease, background .12s ease;
+      overflow:hidden;
+    }
+    .slotBtn:hover{ transform: translateY(-1px); background: rgba(0,0,0,.22); }
+    .slotBtn.empty{ color: rgba(255,255,255,.70); }
+    .slotBtn.disabled{
+      opacity:.65;
+      cursor:not-allowed;
+      transform:none !important;
+    }
+
+    .slotRightTag{
+      font-size: 12px;
+      font-weight: 950;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,215,0,.10);
+      border:1px solid rgba(255,215,0,.30);
+      color: var(--gold2);
+      white-space:nowrap;
+      flex-shrink:0;
+    }
+
+    .championCard{
+      margin-top: 12px;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(34,197,94,.10);
+      border: 1px solid rgba(34,197,94,.35);
+      box-shadow: 0 18px 45px rgba(0,0,0,.25);
+    }
+    .championCard h3{
+      margin:0 0 10px;
+      color: rgba(220,252,231,.95);
+      letter-spacing:.2px;
+    }
+
+    @media (max-width: 760px){
+      .matchBox{ grid-template-columns: 1fr; }
+      .matchLine{ grid-template-columns: 1fr; }
+      .tag{ justify-self:start; }
+      .vs{ justify-self:center; }
+      .team span{ max-width: 100%; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="brand">
+      <h1>🏆 Campeonato — Copa </h1>
+      <div class="pill" id="dayPill">Dia: <small>—</small></div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <div class="panel">
+      <div class="panelHeader">
+        <div>
+          <h2>Partida atual</h2>
+          <p>Marque o vencedor para avançar. Nas fases seguintes você monta os confrontos usando o pool.</p>
+        </div>
+        <div class="right">
+          <button class="btn btn-ghost" onclick="goBackMenu()">🏠 Menu</button>
+          <button class="btn btn-ghost" onclick="goToSelection()">↩️ Seleção 2x2</button>
+        </div>
+      </div>
+
+      <div id="currentMatch" class="matchBox"></div>
+      <div class="progressText" id="progressText"></div>
+
+      <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-muted" onclick="openPresentation()">🖥️ Apresentação</button>
+        <button class="btn btn-danger" onclick="resetCup()">🔁 Reiniciar Campeonato</button>
+      </div>
+
+      <div class="hint">Os dados são separados por dia (sábado/domingo) conforme o menu principal.</div>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <div class="panelHeader">
+          <div>
+            <h2>1ª Fase — fixo pelos slots (12 times)</h2>
+            <p>Confrontos gerados automaticamente pelos slots salvos em <strong>designation-{{dia}}</strong>.</p>
+          </div>
+        </div>
+        <div id="phase1"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panelHeader">
+          <div>
+            <h2>2ª Fase (Semifinal) — montar confrontos</h2>
+            <p>Classificados da 1ª fase (pool → slots A/B).</p>
+          </div>
+        </div>
+        <div id="pool2" class="pool"></div>
+        <div id="phase2"></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <div class="panelHeader">
+          <div>
+            <h2>Final</h2>
+            <p>Finalistas e campeão.</p>
+          </div>
+        </div>
+        <div id="pool3" class="pool"></div>
+        <div id="phase3"></div>
+        <div id="championBox"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panelHeader">
+          <div>
+            <h2>Resumo</h2>
+            <p>Acompanhe o andamento do campeonato do dia.</p>
+          </div>
+        </div>
+        <div class="hint" id="summaryBox"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // =============================
+  // ROTAS
+  // =============================
+  const ROUTE_SELECAO = "/times";
+  function goToSelection() { window.location.href = ROUTE_SELECAO; }
+
+  // =============================
+  // DIA (prioridade menu)
+  // =============================
+  function dayKey() {
+    return localStorage.getItem("currentDay") || localStorage.getItem("cupActiveDay") || "sabado";
+  }
+
+  function paintDayPill(){
+    const d = String(dayKey()).trim().toLowerCase();
+    const label = (d === "domingo") ? "Domingo" : "Sabado";
+    document.getElementById("dayPill").innerHTML = `Dia: <small>${label}</small>`;
+  }
+
+  // =============================
+  // ✅ 12 SLOTS (3 confrontos por chave) — mesma base do /times
+  // Total: 6 confrontos = 12 times
+  // =============================
+  const slotPairs = [
+    ["left1-1","left1-2"],
+    ["left2-1","left2-2"],
+    ["left3-1","left3-2"],
+    ["right1-1","right1-2"],
+    ["right2-1","right2-2"],
+    ["right3-1","right3-2"],
+  ];
+
+  // =============================
+  // ID TEAM
+  // =============================
+  function teamId(t) {
+    return btoa(unescape(encodeURIComponent(`${t.name}||${t.logo}`)));
+  }
+
+  // =============================
+  // PRESENTATION
+  // =============================
+  function openPresentation(){
+    localStorage.setItem("cupActiveDay", dayKey());
+    window.open("/fases", "_blank");
+  }
+
+  // =============================
+  // LER TIMES DA 1ª FASE (sempre por dia)
+  // =============================
+  function getInitialTeamsRound1() {
+    const day = dayKey();
+    const packed = localStorage.getItem(`designation-${day}`);
+
+    // padrão atual: designation-<dia> com chaves dos slots (left1-1 etc)
+    if (packed) {
+      try{
+        const obj = JSON.parse(packed);
+        return slotPairs.map(([a,b]) => [obj[a] || null, obj[b] || null]);
+      }catch{}
+    }
+
+    // fallback por slot do dia (slot-<dia>-<id>)
+    return slotPairs.map(([a,b]) => [
+      JSON.parse(localStorage.getItem(`slot-${day}-${a}`) || "null"),
+      JSON.parse(localStorage.getItem(`slot-${day}-${b}`) || "null")
+    ]);
+  }
+
+  function initMatches(n) {
+    return Array.from({ length: n }, () => ({ a:null, b:null, winner:null, loser:null }));
+  }
+
+  // =============================
+  // STATE
+  // Estrutura para 12 times:
+  // - Fase 1: 6 confrontos -> 6 vencedores
+  // - Fase 2 (Semi): 2 confrontos (4 times escolhidos do pool)
+  // - Fase 3 (Final): 1 confronto (2 times)
+  // - Campeão
+  // =============================
+  function loadState() {
+    const day = dayKey();
+    const saved = localStorage.getItem(`cupState-${day}`);
+    if (saved) return JSON.parse(saved);
+
+    const round1Pairs = getInitialTeamsRound1();
+    const needsFix = round1Pairs.some(p => !p[0] || !p[1]);
+
+    if (needsFix) {
+      alert(`Confronto não está completo para ${day}. Volte e preencha os 12 slots desse dia.`);
+      window.location.href = "/";
+      return null;
+    }
+
+    const state = {
+      phase: 1,
+      p1Index: 0,
+
+      // 6 confrontos
+      phase1: { pairs: round1Pairs, results: Array(6).fill(null).map(()=>({winner:null, loser:null})) },
+
+      // semifinal: 2 confrontos
+      phase2: { pool: [], matches: initMatches(2) },
+
+      // final: 1 confronto
+      phase3: { pool: [], matches: initMatches(1) },
+
+      champion: null
+    };
+
+    saveState(state);
+    return state;
+  }
+
+  function saveState(state) {
+    const day = dayKey();
+    localStorage.setItem("cupActiveDay", day);
+    localStorage.setItem(`cupState-${day}`, JSON.stringify(state));
+    localStorage.setItem("cupLastUpdate", String(Date.now()));
+  }
+
+  // =============================
+  // HTML HELPERS
+  // =============================
+  function teamHtml(t) {
+    return `
+      <div class="team">
+        <img src="${t.logo}" alt="${t.name}">
+        <span title="${t.name}">${t.name}</span>
+      </div>`;
+  }
+
+  let selectedPool = { phase: null, teamId: null };
+
+  function poolItemHtml(phase, t) {
+    const id = teamId(t);
+    const isSel = selectedPool.phase === phase && selectedPool.teamId === id;
+    return `
+      <div class="poolItem ${isSel ? "selected" : ""}" onclick="selectFromPool(${phase}, '${id}')">
+        <img src="${t.logo}" alt="${t.name}">
+        <span title="${t.name}">${t.name}</span>
+      </div>`;
+  }
+
+  function renderPool(state, phase) {
+    const poolEl = document.getElementById(`pool${phase}`);
+    const key = `phase${phase}`;
+    const pool = state[key].pool || [];
+
+    const used = new Set();
+    state[key].matches.forEach(m => {
+      if (m.a) used.add(teamId(m.a));
+      if (m.b) used.add(teamId(m.b));
+    });
+
+    const available = pool.filter(t => !used.has(teamId(t)));
+
+    poolEl.innerHTML = available.length
+      ? available.map(t => poolItemHtml(phase, t)).join("")
+      : `<div class="hint">Sem times disponíveis.</div>`;
+  }
+
+  function renderMatchSlots(phase, matchIndex, match) {
+    const aHtml = match.a ? teamHtml(match.a) : `<div class="team"><span>— Selecione um time</span></div>`;
+    const bHtml = match.b ? teamHtml(match.b) : `<div class="team"><span>— Selecione um time</span></div>`;
+    const disabled = match.winner ? "disabled" : "";
+
+    return `
+      <div class="matchLine">
+        <div class="slotBtn ${match.a ? "" : "empty"} ${disabled}" onclick="toggleSlot(${phase}, ${matchIndex}, 'a')">
+          ${aHtml}
+          <span class="slotRightTag">A</span>
+        </div>
+
+        <div class="vs">VS</div>
+
+        <div class="slotBtn ${match.b ? "" : "empty"} ${disabled}" onclick="toggleSlot(${phase}, ${matchIndex}, 'b')">
+          ${bHtml}
+          <span class="slotRightTag">B</span>
+        </div>
+
+        ${
+          match.winner
+            ? `<span class="tag tag-win">Vencedor: ${match.winner.name}</span>`
+            : (match.a && match.b
+                ? `<span class="tag tag-info">Pronto</span>`
+                : `<span class="tag">Montar</span>`)
+        }
+      </div>`;
+  }
+
+  // =============================
+  // RENDER FASES
+  // =============================
+  function renderPhases(state) {
+    // Fase 1 (6 confrontos)
+    const p1 = document.getElementById("phase1");
+    p1.innerHTML = state.phase1.pairs.map((pair, i) => {
+      const res = state.phase1.results[i];
+      const win = res?.winner;
+      const lose = res?.loser;
+
+      return `
+        <div class="matchLine">
+          ${teamHtml(pair[0])}
+          <div class="vs">VS</div>
+          ${teamHtml(pair[1])}
+          ${
+            win
+              ? `<span class="tag tag-win">Venceu: ${win.name}</span>
+                 <span class="tag tag-lose">Perdeu: ${lose.name}</span>`
+              : `<span class="tag">Aguardando</span>`
+          }
+        </div>`;
+    }).join("");
+
+    // Semifinal (fase2): 2 confrontos
+    document.getElementById("phase2").innerHTML =
+      state.phase2.matches.map((m, idx) => renderMatchSlots(2, idx, m)).join("");
+
+    // Final (fase3): 1 confronto
+    document.getElementById("phase3").innerHTML =
+      state.phase3.matches.map((m, idx) => renderMatchSlots(3, idx, m)).join("");
+
+    renderPool(state, 2);
+    renderPool(state, 3);
+
+    const championBox = document.getElementById("championBox");
+    championBox.innerHTML = state.champion
+      ? `
+        <div class="championCard">
+          <h3>🏆 Campeão</h3>
+          <div class="matchBox">${teamHtml(state.champion)}</div>
+        </div>`
+      : "";
+
+    // resumo
+    const summary = document.getElementById("summaryBox");
+    const p1Done = state.phase1.results.filter(r => r && r.winner).length;
+    const p2Done = state.phase2.matches.filter(m => m.winner).length;
+    const p3Done = state.phase3.matches.filter(m => m.winner).length;
+
+    summary.innerHTML = `
+      <div>Fase atual: <strong>${state.champion ? "Finalizado" : state.phase}</strong></div>
+      <div>1ª fase concluída: <strong>${p1Done}/6</strong></div>
+      <div>Semifinais concluídas: <strong>${p2Done}/2</strong></div>
+      <div>Final concluída: <strong>${p3Done}/1</strong></div>
+    `;
+  }
+
+  // =============================
+  // POOL SELECTION
+  // =============================
+  function selectFromPool(phase, id) {
+    if (selectedPool.phase === phase && selectedPool.teamId === id) {
+      selectedPool = { phase:null, teamId:null };
+    } else {
+      selectedPool = { phase, teamId:id };
+    }
+    rerender(loadState());
+  }
+
+  function toggleSlot(phase, matchIndex, side) {
+    const state = loadState();
+    if (!state) return;
+
+    const key = `phase${phase}`;
+    const match = state[key].matches[matchIndex];
+    if (match.winner) return;
+
+    if (match[side]) {
+      match[side] = null;
+      saveState(state);
+      rerender(state);
+      return;
+    }
+
+    if (selectedPool.phase !== phase || !selectedPool.teamId) {
+      alert("Selecione um time do pool antes de preencher o slot.");
+      return;
+    }
+
+    const poolTeam = (state[key].pool || []).find(t => teamId(t) === selectedPool.teamId);
+    if (!poolTeam) {
+      alert("Time não encontrado no pool desta fase.");
+      return;
+    }
+
+    const id = selectedPool.teamId;
+    const alreadyUsed = state[key].matches.some(m =>
+      (m.a && teamId(m.a) === id) || (m.b && teamId(m.b) === id)
+    );
+    if (alreadyUsed) {
+      alert("Este time já foi usado em outro confronto desta fase.");
+      return;
+    }
+
+    match[side] = poolTeam;
+    selectedPool = { phase:null, teamId:null };
+
+    saveState(state);
+    rerender(state);
+  }
+
+  // =============================
+  // PARTIDA ATUAL
+  // =============================
+  function currentMatchForPhase(state, phase) {
+    const key = `phase${phase}`;
+    return state[key].matches.findIndex(m => !m.winner);
+  }
+
+  function renderCurrentMatch(state) {
+    const box = document.getElementById("currentMatch");
+    const txt = document.getElementById("progressText");
+
+    if (state.champion) {
+      box.innerHTML = `<div style="font-weight:950;">Campeonato finalizado ✅</div>`;
+      txt.textContent = "";
+      return;
+    }
+
+    if (state.phase === 1) {
+      const i = state.p1Index;
+      const pair = state.phase1.pairs[i];
+      txt.textContent = `1ª Fase — Partida ${i+1} de 6`;
+
+      box.innerHTML = `
+        ${teamHtml(pair[0])}
+        <div class="vs">VS</div>
+        ${teamHtml(pair[1])}
+        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+          <button class="btn btn-success btn-sm" onclick="setWinnerPhase1(0)">Venceu</button>
+          <button class="btn btn-success btn-sm" onclick="setWinnerPhase1(1)">Venceu</button>
+        </div>
+      `;
+      return;
+    }
+
+    const idx = currentMatchForPhase(state, state.phase);
+    const key = `phase${state.phase}`;
+    const match = state[key].matches[idx];
+
+    // fase 2: 2 confrontos | fase 3: 1 confronto
+    const total = (state.phase === 2) ? 2 : 1;
+    txt.textContent = `Fase ${state.phase} — Confronto ${idx+1} de ${total}`;
+
+    if (!match || !match.a || !match.b) {
+      box.innerHTML = `<div style="font-weight:950;">Monte os confrontos da Fase ${state.phase} (A e B).</div>`;
+      return;
+    }
+
+    box.innerHTML = `
+      ${teamHtml(match.a)}
+      <div class="vs">VS</div>
+      ${teamHtml(match.b)}
+      <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;">
+        <button class="btn btn-success btn-sm" onclick="setWinnerManual(${state.phase}, ${idx}, 'a')">Venceu</button>
+        <button class="btn btn-success btn-sm" onclick="setWinnerManual(${state.phase}, ${idx}, 'b')">Venceu</button>
+      </div>
+    `;
+  }
+
+  // =============================
+  // SET WINNERS
+  // =============================
+  function setWinnerPhase1(winnerIdx) {
+    const state = loadState();
+    if (!state || state.phase !== 1) return;
+
+    const i = state.p1Index;
+    const pair = state.phase1.pairs[i];
+    const winner = pair[winnerIdx];
+    const loser  = pair[winnerIdx === 0 ? 1 : 0];
+
+    state.phase1.results[i] = { winner, loser };
+
+    // ✅ entra no pool da semifinal
+    state.phase2.pool.push(winner);
+
+    state.p1Index++;
+
+    // ✅ terminou 6 confrontos
+    if (state.p1Index >= 6) {
+      state.phase = 2;
+    }
+
+    saveState(state);
+    rerender(state);
+  }
+
+  function setWinnerManual(phase, matchIndex, side) {
+    const state = loadState();
+    if (!state || state.phase !== phase) return;
+
+    const key = `phase${phase}`;
+    const match = state[key].matches[matchIndex];
+    if (!match || !match.a || !match.b || match.winner) return;
+
+    const winner = side === "a" ? match.a : match.b;
+    const loser  = side === "a" ? match.b : match.a;
+
+    match.winner = winner;
+    match.loser = loser;
+
+    if (phase === 2) state.phase3.pool.push(winner); // vai pra final
+    if (phase === 3) state.champion = winner;        // campeão
+
+    // avançar fase quando todos os confrontos da fase estiverem concluídos
+    const allDone = state[key].matches.every(m => m.winner);
+
+    if (allDone) {
+      if (phase === 2) state.phase = 3;
+      // se phase === 3, campeão já setado
+    }
+
+    saveState(state);
+    rerender(state);
+  }
+
+  function rerender(state) {
+    renderPhases(state);
+    renderCurrentMatch(state);
+  }
+
+  // =============================
+  // NAV / RESET
+  // =============================
+  function goBackMenu() {
+    window.location.href = "/";
+  }
+
+  function resetCup() {
+    const d = String(dayKey()).trim().toLowerCase();
+    const label = (d === "domingo") ? "Domingo" : "Sabado";
+    if (!confirm(`Reiniciar campeonato do dia ${label}? (zera resultados)`)) return;
+
+    localStorage.removeItem(`cupState-${d}`);
+    selectedPool = { phase:null, teamId:null };
+
+    const state = loadState();
+    if (state) rerender(state);
+  }
+
+  // init
+  paintDayPill();
+  let state = loadState();
+  if (state) rerender(state);
+
+  // se trocar o dia em outra aba
+  window.addEventListener("storage", (e) => {
+    if (!e.key) return;
+    if (e.key === "currentDay" || e.key === "cupActiveDay" || e.key === "cupLastUpdate") {
+      paintDayPill();
+      selectedPool = { phase:null, teamId:null };
+      state = loadState();
+      if (state) rerender(state);
+    }
+  });
+</script>
+</body>
+</html>

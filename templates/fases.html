@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Apresentação das Fases - Copa Nove de Julho</title>
+  <style>
+    body{ margin:0; font-family:"Segoe UI",Tahoma,sans-serif; background:#0b1020; color:#fff; }
+    header{ padding:18px 16px; text-align:center; background:rgba(0,0,0,.55); border-bottom:1px solid rgba(255,255,255,.12); }
+    header h1{ margin:0; font-size:28px; }
+    header p{ margin:6px 0 0; opacity:.85; }
+
+    .wrap{ max-width:1200px; margin:18px auto; padding:0 14px 18px; }
+    .phaseTitle{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:14px 0 10px; }
+    .phaseTitle h2{ margin:0; font-size:22px; letter-spacing:.2px; }
+
+    .badge{
+      font-weight:800;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.18);
+      padding: 6px 10px;
+      border-radius:999px;
+      white-space:nowrap;
+    }
+
+    .board{
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 14px;
+      overflow:hidden;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 120px 1fr 220px;
+      gap:10px;
+      align-items:center;
+    }
+    .row{ display: contents; }
+
+    .slot{
+      background: rgba(255,255,255,.10);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 14px;
+      padding: 12px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      min-width:0;
+    }
+
+    .team{ display:flex; align-items:center; gap:10px; min-width:0; }
+    .team img{
+      width:52px; height:52px; border-radius:50%;
+      object-fit:cover; border:1px solid rgba(255,255,255,.18);
+      background:#fff;
+    }
+    .team span{
+      font-weight:900; font-size:18px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      max-width: 420px;
+    }
+
+    .vs{ text-align:center; font-weight:900; font-size:20px; color:#ffd54a; letter-spacing:2px; }
+
+    .winner{
+      justify-self:end;
+      background: rgba(40,167,69,.20);
+      border: 1px solid rgba(40,167,69,.45);
+      color:#b7ffcb;
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-weight:900;
+      white-space:nowrap;
+      text-align:center;
+    }
+
+    .waiting{
+      opacity:.85;
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.08);
+      border: 1px dashed rgba(255,255,255,.18);
+      text-align:center;
+    }
+
+    .flash{ animation: flash 600ms ease; }
+    @keyframes flash{ 0%{ transform:scale(.98); opacity:.4; } 100%{ transform:scale(1); opacity:1; } }
+
+    @media (max-width: 980px){
+      .grid{ grid-template-columns: 1fr; }
+      .vs{ margin:4px 0; }
+      .winner{ justify-self:start; }
+      .slot .team span{ max-width:100%; }
+    }
+
+    .slot.win { border:2px solid #28a745 !important; background:rgba(40,167,69,0.18) !important; }
+    .slot.lose { border:2px solid #dc3545 !important; background:rgba(220,53,69,0.16) !important; }
+    .winner.ok { color:#b7ffcb; }
+    .winner.wait { color:rgba(255,255,255,.75); background:rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.18); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Apresentação das Fases</h1>
+    <p id="subtitle">Aguardando campeonato...</p>
+  </header>
+
+  <div class="wrap">
+    <div class="phaseTitle">
+      <h2 id="phaseName">—</h2>
+      <div class="badge" id="phaseBadge">—</div>
+    </div>
+
+    <div class="board" id="board">
+      <div class="waiting">Aguardando dados do campeonato (abra o campeonato e clique em “Venceu” para atualizar).</div>
+    </div>
+  </div>
+
+<script>
+  const subtitle = document.getElementById("subtitle");
+  const phaseName = document.getElementById("phaseName");
+  const phaseBadge = document.getElementById("phaseBadge");
+  const board = document.getElementById("board");
+
+  let lastPhase = null;
+  let lastKeyUsed = null;
+
+  function getActiveDay(){
+    return localStorage.getItem("cupActiveDay")
+      || localStorage.getItem("currentDay")
+      || "sabado";
+  }
+
+  // ✅ CHAVE SEMPRE POR DIA
+  function stateKeyForDay(day){
+    return `cupState-${day}`;
+  }
+
+  // ✅ Prioriza SEMPRE o cupState do dia atual
+  function findStateKey(){
+    const day = getActiveDay();
+    const preferred = stateKeyForDay(day);
+
+    if (localStorage.getItem(preferred)) return preferred;
+
+    // fallback: se não existir do dia, tenta outro (caso raro)
+    for (let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if (k && k.startsWith("cupState-") && localStorage.getItem(k)) return k;
+    }
+    return null;
+  }
+
+  function safeJSON(raw){
+    try { return JSON.parse(raw); } catch { return null; }
+  }
+
+  function loadState(){
+    const key = findStateKey();
+    if(!key) return { key:null, state:null };
+    return { key, state: safeJSON(localStorage.getItem(key)) };
+  }
+
+  function phaseLabel(p){
+    const map = { 1:"1ª Fase (Oitavas)", 2:"2ª Fase (Quartas)", 3:"3ª Fase (Semifinal)", 4:"Final" };
+    return map[p] || `Fase ${p}`;
+  }
+
+  function dayLabel(day){
+    return day === "domingo" ? "Domingo" : "Sábado";
+  }
+
+  function teamHTML(t){
+    if(!t || !t.name) {
+      return `
+        <div class="team">
+          <img src="" alt="" style="background:#fff;opacity:.2">
+          <span>—</span>
+        </div>
+      `;
+    }
+    return `
+      <div class="team">
+        <img src="${t.logo || ""}" alt="${t.name}">
+        <span title="${t.name}">${t.name}</span>
+      </div>
+    `;
+  }
+
+  function normalizePair(pair, winnerFromArray){
+    let a=null, b=null;
+
+    if (Array.isArray(pair)) {
+      a = pair[0] || null;
+      b = pair[1] || null;
+    }
+
+    if (!Array.isArray(pair) && pair && typeof pair === "object") {
+      a = pair.a || pair.teamA || pair.left || pair.A || pair.timeA || null;
+      b = pair.b || pair.teamB || pair.right || pair.B || pair.timeB || null;
+    }
+
+    let winner = null;
+
+    if (!Array.isArray(pair) && pair && typeof pair === "object") {
+      if (pair.winner && pair.winner.name) winner = pair.winner;
+      else if (typeof pair.winnerIndex === "number") winner = (pair.winnerIndex === 0 ? a : b);
+      else if (typeof pair.winner === "number") winner = (pair.winner === 0 ? a : b);
+      else if (typeof pair.winnerName === "string") winner = { name: pair.winnerName };
+    }
+
+    if (!winner && Array.isArray(pair) && pair.length >= 3) {
+      const third = pair[2];
+      if (third && typeof third === "object" && third.name) winner = third;
+      if (third === 0 || third === 1) winner = (third === 0 ? a : b);
+    }
+
+    if (!winner && winnerFromArray !== undefined && winnerFromArray !== null) {
+      if (winnerFromArray && typeof winnerFromArray === "object" && winnerFromArray.name) winner = winnerFromArray;
+      if (winnerFromArray === 0 || winnerFromArray === 1) winner = (winnerFromArray === 0 ? a : b);
+      if (typeof winnerFromArray === "string") winner = { name: winnerFromArray };
+    }
+
+    const wName = winner?.name || null;
+
+    let winSide = null;
+    if (wName && a?.name && wName === a.name) winSide = "A";
+    if (wName && b?.name && wName === b.name) winSide = "B";
+
+    return { a, b, wName, winSide };
+  }
+
+  function detectModel(state){
+    if (state && state.rounds && state.round) return "A";
+    if (state && (state.phase || state.phase1 || state.phase2)) return "B";
+    return "UNKNOWN";
+  }
+
+  function getCurrentPhase(state){
+    if (typeof state.phase === "number") return state.phase; // modelo B
+    if (typeof state.round === "number") return state.round; // modelo A
+    return 1;
+  }
+
+  function getPhaseData(state, phase){
+    const model = detectModel(state);
+
+    if (model === "A") {
+      const r = state.rounds?.[phase] || {};
+      return { pairs: r.pairs || [], winners: r.winners || [] };
+    }
+
+    const block = state[`phase${phase}`] || {};
+
+    // ✅ AQUI: se vier results (fase 1), converte p/ lista de winners (time)
+    if (Array.isArray(block.results)) {
+      return {
+        pairs: block.pairs || [],
+        winners: block.results.map(r => (r && r.winner) ? r.winner : null)
+      };
+    }
+
+    return {
+      pairs: block.pairs || block.matches || [],
+      winners: block.winners || block.results || []
+    };
+  }
+
+  function hardClearBoardAnimation(){
+    board.innerHTML = "";
+    board.classList.remove("flash");
+    void board.offsetWidth;
+    board.classList.add("flash");
+  }
+
+  function render(){
+    if (location.protocol === "file:") {
+      subtitle.textContent = "Abra esta tela pelo servidor (/fases), não por file://";
+      board.innerHTML = `<div class="waiting">Abra em: http://127.0.0.1:5000/fases</div>`;
+      return;
+    }
+
+    const day = getActiveDay();
+    const { key, state } = loadState();
+
+    // ✅ quando trocar o dia (logo troca a chave), limpa geral
+    if (key !== lastKeyUsed) {
+      lastKeyUsed = key;
+      lastPhase = null;
+      hardClearBoardAnimation();
+    }
+
+    if(!state){
+      subtitle.textContent = `Dia: ${dayLabel(day)} | nenhum cupState encontrado`;
+      phaseName.textContent = "—";
+      phaseBadge.textContent = "—";
+      board.innerHTML = `<div class="waiting">Nenhum cupState para ${dayLabel(day)}. Abra /campeonato e avance uma partida.</div>`;
+      return;
+    }
+
+    const model = detectModel(state);
+    const phase = getCurrentPhase(state);
+
+    subtitle.textContent = `Dia: ${dayLabel(day)} | lendo: ${key} | modelo: ${model} | atualiza em tempo real`;
+
+    // limpa ao trocar de fase
+    if (lastPhase !== null && phase !== lastPhase) {
+      hardClearBoardAnimation();
+    }
+    lastPhase = phase;
+
+    if (state.champion && state.champion.name) {
+      phaseName.textContent = "🏆 Campeão";
+      phaseBadge.textContent = "Finalizado";
+      board.innerHTML = `
+        <div class="grid">
+          <div class="slot win">${teamHTML(state.champion)}</div>
+          <div class="vs">🏆</div>
+          <div class="slot win">${teamHTML(state.champion)}</div>
+          <div class="winner ok">CAMPEÃO: ${state.champion.name}</div>
+        </div>
+      `;
+      return;
+    }
+
+    phaseName.textContent = phaseLabel(phase);
+    phaseBadge.textContent = `${dayLabel(day)} • Fase ${phase}`;
+
+    const { pairs, winners } = getPhaseData(state, phase);
+
+    if (!pairs || !pairs.length) {
+      board.innerHTML = `<div class="waiting">Sem confrontos nesta fase ainda.</div>`;
+      return;
+    }
+
+    let html = `<div class="grid">`;
+    pairs.forEach((pair, i) => {
+      const norm = normalizePair(pair, winners?.[i]);
+
+      const aClass = norm.winSide === "A" ? "win" : (norm.winSide === "B" ? "lose" : "");
+      const bClass = norm.winSide === "B" ? "win" : (norm.winSide === "A" ? "lose" : "");
+
+      html += `
+        <div class="row">
+          <div class="slot ${aClass}">${teamHTML(norm.a)}</div>
+          <div class="vs">VS</div>
+          <div class="slot ${bClass}">${teamHTML(norm.b)}</div>
+          <div class="winner ${norm.wName ? "ok" : "wait"}">
+            ${norm.wName ? `Vencedor: ${norm.wName}` : `Aguardando vencedor...`}
+          </div>
+        </div>
+      `;
+    });
+    html += `</div>`;
+    board.innerHTML = html;
+  }
+
+  render();
+
+  // ✅ atualiza em tempo real
+  window.addEventListener("storage", (e) => {
+    if(!e.key) return;
+
+    // Mudou o dia -> re-render total
+    if (e.key === "currentDay" || e.key === "cupActiveDay") {
+      lastKeyUsed = null;
+      render();
+      return;
+    }
+
+    // Atualizações de campeonato por dia
+    if (e.key.startsWith("cupState-") || e.key === "cupLastUpdate") {
+      render();
+    }
+  });
+
+  setInterval(render, 600);
+</script>
+</body>
+</html>

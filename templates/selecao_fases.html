@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Seleção 4x4 - Apresentação das Fases</title>
+  <style>
+    body{
+      margin:0;
+      font-family:"Segoe UI",Tahoma,sans-serif;
+      background:#0b1020;
+      color:#fff;
+    }
+
+    header{
+      padding:18px 16px;
+      text-align:center;
+      background:rgba(0,0,0,.55);
+      border-bottom:1px solid rgba(255,255,255,.12);
+    }
+    header h1{ margin:0; font-size:28px; }
+    header p{ margin:6px 0 0; opacity:.85; }
+
+    .wrap{ max-width:1200px; margin:18px auto; padding:0 14px 18px; }
+
+    .phaseTitle{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px; margin:14px 0 10px;
+    }
+    .phaseTitle h2{ margin:0; font-size:22px; letter-spacing:.2px; }
+
+    .badge{
+      font-weight:800;
+      background:rgba(255,255,255,.12);
+      border:1px solid rgba(255,255,255,.18);
+      padding:6px 10px;
+      border-radius:999px;
+      white-space:nowrap;
+    }
+
+    .board{
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:16px;
+      padding:14px;
+      overflow:hidden;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 120px 1fr 260px;
+      gap:10px;
+      align-items:center;
+    }
+    .row{ display:contents; }
+
+    .slot{
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.15);
+      border-radius:14px;
+      padding:12px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      min-width:0;
+    }
+
+    .team{ display:flex; align-items:center; gap:10px; min-width:0; }
+    .team img{
+      width:52px; height:52px; border-radius:50%;
+      object-fit:cover;
+      border:1px solid rgba(255,255,255,.18);
+      background:#fff;
+    }
+    .team span{
+      font-weight:900; font-size:18px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      max-width: 420px;
+    }
+
+    .vs{
+      text-align:center;
+      font-weight:900;
+      font-size:20px;
+      color:#ffd54a;
+      letter-spacing:2px;
+    }
+
+    .winner{
+      justify-self:end;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.18);
+      color:rgba(255,255,255,.9);
+      padding:10px 12px;
+      border-radius:999px;
+      font-weight:900;
+      white-space:nowrap;
+      text-align:left;
+      line-height: 1.2;
+    }
+    .winner.ok{
+      background: rgba(40,167,69,.20);
+      border: 1px solid rgba(40,167,69,.45);
+      color:#b7ffcb;
+    }
+    .winner.wait{
+      color: rgba(255,255,255,.75);
+    }
+
+    .waiting{
+      opacity:.85;
+      padding:14px;
+      border-radius:14px;
+      background:rgba(255,255,255,.08);
+      border:1px dashed rgba(255,255,255,.18);
+      text-align:center;
+    }
+
+    .flash{ animation: flash 600ms ease; }
+    @keyframes flash{
+      0%{ transform:scale(.98); opacity:.4; }
+      100%{ transform:scale(1); opacity:1; }
+    }
+
+    .slot.win { border:2px solid #28a745 !important; background:rgba(40,167,69,0.18) !important; }
+    .slot.lose{ border:2px solid #dc3545 !important; background:rgba(220,53,69,0.16) !important; }
+
+    @media (max-width: 980px){
+      .grid{ grid-template-columns:1fr; }
+      .vs{ margin:4px 0; }
+      .winner{ justify-self:start; white-space:normal; border-radius:14px; }
+      .slot .team span{ max-width:100%; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Seleção 4x4 - Apresentação das Fases</h1>
+    <p id="subtitle">Aguardando campeonato...</p>
+  </header>
+
+  <div class="wrap">
+    <div class="phaseTitle">
+      <h2 id="phaseName">—</h2>
+      <div class="badge" id="phaseBadge">—</div>
+    </div>
+
+    <div class="board" id="board">
+      <div class="waiting">Aguardando dados do campeonato da Seleção 4x4 (abra a página do campeonato e clique em “Venceu” para atualizar).</div>
+    </div>
+  </div>
+
+<script>
+  const subtitle  = document.getElementById("subtitle");
+  const phaseName = document.getElementById("phaseName");
+  const phaseBadge= document.getElementById("phaseBadge");
+  const board     = document.getElementById("board");
+
+  let lastPhase = null;
+  let lastKeyUsed = null;
+
+  // ===== DIA (sábado/domingo) =====
+  function getActiveDay(){
+    return (localStorage.getItem("cup4ActiveDay")
+      || localStorage.getItem("currentDay")
+      || "sabado").trim().toLowerCase();
+  }
+  function dayLabel(day){
+    return day === "domingo" ? "Domingo" : "Sabado";
+  }
+
+  // ===== STATE KEY (Seleção 4x4) =====
+  function stateKeyForDay(day){
+    return `cup4State-${day}`;
+  }
+
+  function findStateKey(){
+    const day = getActiveDay();
+    const preferred = stateKeyForDay(day);
+    if (localStorage.getItem(preferred)) return preferred;
+
+    // fallback: pega qualquer cup4State-*
+    for (let i=0;i<localStorage.length;i++){
+      const k = localStorage.key(i);
+      if (k && k.startsWith("cup4State-") && localStorage.getItem(k)) return k;
+    }
+    return null;
+  }
+
+  function safeJSON(raw){
+    try { return JSON.parse(raw); } catch { return null; }
+  }
+
+  function loadState(){
+    const key = findStateKey();
+    if(!key) return { key:null, state:null };
+    return { key, state: safeJSON(localStorage.getItem(key)) };
+  }
+
+  // ✅ MODELO 12 SLOTS:
+  // fase 1: 6 confrontos (12 times)
+  // fase 2: semifinal (2 confrontos)
+  // fase 3: final (1 confronto)
+  function phaseLabel(p){
+    const map = {
+      1: "1ª Fase (12 times • 6 confrontos)",
+      2: "Semifinal",
+      3: "Final"
+    };
+    return map[p] || `Fase ${p}`;
+  }
+
+  function teamHTML(t){
+    if(!t || !t.name) {
+      return `
+        <div class="team">
+          <img src="" alt="" style="background:#fff;opacity:.2">
+          <span>—</span>
+        </div>
+      `;
+    }
+    return `
+      <div class="team">
+        <img src="${t.logo || ""}" alt="${t.name}">
+        <span title="${t.name}">${t.name}</span>
+      </div>
+    `;
+  }
+
+  // Normaliza um "pair" em {a,b,wName,lName, winSide, loseSide}
+  function normalizePair(pair, winnerObj, loserObj){
+    let a=null, b=null;
+
+    // pair como array
+    if (Array.isArray(pair)) {
+      a = pair[0] || null;
+      b = pair[1] || null;
+    }
+
+    // pair como objeto (matches)
+    if (!Array.isArray(pair) && pair && typeof pair === "object") {
+      a = pair.a || pair.teamA || pair.left || pair.A || pair.timeA || null;
+      b = pair.b || pair.teamB || pair.right || pair.B || pair.timeB || null;
+    }
+
+    // winner/loser
+    let winner = null;
+    let loser  = null;
+
+    if (!Array.isArray(pair) && pair && typeof pair === "object") {
+      if (pair.winner && pair.winner.name) winner = pair.winner;
+      if (pair.loser  && pair.loser.name)  loser  = pair.loser;
+
+      if (!winner && typeof pair.winnerName === "string") winner = { name: pair.winnerName };
+      if (!loser  && typeof pair.loserName  === "string") loser  = { name: pair.loserName };
+    }
+
+    if (!winner && winnerObj) {
+      if (winnerObj.name) winner = winnerObj;
+      else if (winnerObj.winner && winnerObj.winner.name) winner = winnerObj.winner;
+    }
+    if (!loser && loserObj) {
+      if (loserObj.name) loser = loserObj;
+      else if (loserObj.loser && loserObj.loser.name) loser = loserObj.loser;
+    }
+
+    const wName = winner?.name || null;
+    const lName = loser?.name  || null;
+
+    let winSide  = null; // "A"|"B"
+    let loseSide = null;
+
+    if (wName && a?.name && wName === a.name) winSide = "A";
+    if (wName && b?.name && wName === b.name) winSide = "B";
+
+    if (lName && a?.name && lName === a.name) loseSide = "A";
+    if (lName && b?.name && lName === b.name) loseSide = "B";
+
+    return { a, b, wName, lName, winSide, loseSide };
+  }
+
+  function detectModel(state){
+    // Modelo B: {phase, phase1:{pairs,results}, phase2:{matches}, phase3:{matches}, champion}
+    if (state && (typeof state.phase === "number" || state.phase1 || state.phase2)) return "B";
+    // compat fallback
+    if (state && state.rounds && state.round) return "A";
+    return "UNKNOWN";
+  }
+
+  function getCurrentPhase(state){
+    if (typeof state.phase === "number") return state.phase; // modelo B
+    if (typeof state.round === "number") return state.round; // modelo A
+    return 1;
+  }
+
+  function getPhaseData(state, phase){
+    const model = detectModel(state);
+
+    if (model === "A") {
+      const r = state.rounds?.[phase] || {};
+      return { pairs: r.pairs || [], winners: r.winners || [], losers: r.losers || [] };
+    }
+
+    const block = state[`phase${phase}`] || {};
+
+    // phase 1: pairs + results[{winner,loser}]
+    if (phase === 1) {
+      const results = block.results || [];
+      return {
+        pairs: block.pairs || [],
+        winners: results.map(r => r?.winner || null),
+        losers:  results.map(r => r?.loser  || null),
+      };
+    }
+
+    // phase 2/3: matches[{a,b,winner,loser}]
+    const matches = block.matches || block.pairs || [];
+    return {
+      pairs: matches,
+      winners: matches.map(m => m?.winner || null),
+      losers:  matches.map(m => m?.loser  || null),
+    };
+  }
+
+  function hardClearBoardAnimation(){
+    board.innerHTML = "";
+    board.classList.remove("flash");
+    void board.offsetWidth;
+    board.classList.add("flash");
+  }
+
+  function render(){
+    if (location.protocol === "file:") {
+      subtitle.textContent = "Abra esta tela pelo servidor, não por file://";
+      board.innerHTML = `<div class="waiting">Abra em: http://127.0.0.1:5000/selecao_fases</div>`;
+      return;
+    }
+
+    const day = getActiveDay();
+    const { key, state } = loadState();
+
+    if (key !== lastKeyUsed) {
+      lastKeyUsed = key;
+      lastPhase = null;
+      hardClearBoardAnimation();
+    }
+
+    if(!state){
+      subtitle.textContent = `Dia: ${dayLabel(day)} | nenhum cup4State encontrado`;
+      phaseName.textContent = "—";
+      phaseBadge.textContent = "—";
+      board.innerHTML = `<div class="waiting">Nenhum estado encontrado para ${dayLabel(day)}. Abra a tela do campeonato 4x4 e avance uma partida.</div>`;
+      return;
+    }
+
+    const model = detectModel(state);
+
+    // ✅ protege contra estados antigos (4 fases): limita visual a 1..3
+    let phase = getCurrentPhase(state);
+    if (phase > 3 && !state.champion) phase = 3;
+
+    subtitle.textContent = `Dia: ${dayLabel(day)} | lendo: ${key} | modelo: ${model} | atualiza em tempo real`;
+
+    if (lastPhase !== null && phase !== lastPhase) {
+      hardClearBoardAnimation();
+    }
+    lastPhase = phase;
+
+    // campeão
+    if (state.champion && state.champion.name) {
+      phaseName.textContent = "🏆 Campeão";
+      phaseBadge.textContent = `${dayLabel(day)} • Finalizado`;
+      board.innerHTML = `
+        <div class="grid">
+          <div class="slot win">${teamHTML(state.champion)}</div>
+          <div class="vs">🏆</div>
+          <div class="slot win">${teamHTML(state.champion)}</div>
+          <div class="winner ok">CAMPEÃO: ${state.champion.name}</div>
+        </div>
+      `;
+      return;
+    }
+
+    phaseName.textContent = phaseLabel(phase);
+    phaseBadge.textContent = `${dayLabel(day)} • Fase ${phase}`;
+
+    const { pairs, winners, losers } = getPhaseData(state, phase);
+
+    if (!pairs || !pairs.length) {
+      board.innerHTML = `<div class="waiting">Sem confrontos nesta fase ainda.</div>`;
+      return;
+    }
+
+    let html = `<div class="grid">`;
+    pairs.forEach((pair, i) => {
+      const norm = normalizePair(pair, winners?.[i], losers?.[i]);
+
+      const aClass =
+        norm.winSide === "A" ? "win" :
+        norm.loseSide === "A" ? "lose" : "";
+
+      const bClass =
+        norm.winSide === "B" ? "win" :
+        norm.loseSide === "B" ? "lose" : "";
+
+      const rightBox =
+        norm.wName
+          ? `<div class="winner ok">
+               Vencedor: ${norm.wName}
+               ${norm.lName ? `<br><span style="opacity:.95;">Perdeu: ${norm.lName}</span>` : ""}
+             </div>`
+          : `<div class="winner wait">Aguardando vencedor...</div>`;
+
+      html += `
+        <div class="row">
+          <div class="slot ${aClass}">${teamHTML(norm.a)}</div>
+          <div class="vs">VS</div>
+          <div class="slot ${bClass}">${teamHTML(norm.b)}</div>
+          ${rightBox}
+        </div>
+      `;
+    });
+    html += `</div>`;
+    board.innerHTML = html;
+  }
+
+  render();
+
+  // realtime
+  window.addEventListener("storage", (e) => {
+    if(!e.key) return;
+
+    if (e.key === "currentDay" || e.key === "cup4ActiveDay") {
+      lastKeyUsed = null;
+      render();
+      return;
+    }
+
+    if (e.key.startsWith("cup4State-") || e.key === "cup4LastUpdate" || e.key === "cupLastUpdate") {
+      render();
+    }
+  });
+
+  setInterval(render, 600);
+</script>
+</body>
+</html>

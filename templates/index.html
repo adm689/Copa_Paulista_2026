@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistema de Campeonatos</title>
+
+  <style>
+    :root{
+      --bg0:#0b1020;
+      --bg1:#0f1733;
+      --card: rgba(255,255,255,.08);
+      --card2: rgba(255,255,255,.10);
+      --stroke: rgba(255,255,255,.14);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.70);
+
+      --gold:#FFD700;
+      --gold2:#ffea7a;
+
+      --blue:#3b82f6;
+      --blue2:#2563eb;
+
+      --green:#22c55e;
+      --red:#ef4444;
+      --gray:#64748b;
+      --amber:#f59e0b;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family:"Segoe UI",Tahoma,Geneva,Verdana,sans-serif;
+      color:var(--text);
+      min-height:100vh;
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(59,130,246,.28), transparent 60%),
+        radial-gradient(900px 500px at 90% 0%, rgba(255,215,0,.18), transparent 60%),
+        radial-gradient(1000px 600px at 50% 110%, rgba(34,197,94,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+    }
+
+    /* ====== HEADER ====== */
+    header{
+      position:sticky;
+      top:0;
+      z-index:10;
+      padding:18px 14px;
+      background: rgba(0,0,0,.45);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,.10);
+    }
+    .brand{
+      max-width:1180px;
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .brand h1{
+      margin:0;
+      font-size: 1.55rem;
+      letter-spacing:.2px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid rgba(255,215,0,.55);
+      background: rgba(255,215,0,.08);
+      color: var(--gold2);
+      font-weight:900;
+      white-space:nowrap;
+    }
+    .pill small{ color:rgba(255,255,255,.75); font-weight:800; }
+
+    /* ====== CONTAINER / CARD ====== */
+    .container{
+      max-width:1180px;
+      margin: 18px auto 28px;
+      padding: 0 14px;
+    }
+    .panel{
+      background: var(--card);
+      border:1px solid var(--stroke);
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 18px 45px rgba(0,0,0,.35);
+      overflow:hidden;
+    }
+
+    .panelHeader{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-bottom: 14px;
+    }
+    .panelHeader h2{
+      margin:0;
+      font-size: 1.2rem;
+      letter-spacing:.2px;
+    }
+    .panelHeader p{
+      margin:6px 0 0;
+      color: var(--muted);
+      max-width: 760px;
+      line-height: 1.35;
+    }
+    .panelHeader .right{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+    }
+
+    .hidden{ display:none; }
+
+    /* ====== BUTTONS ====== */
+    .btn{
+      border:0;
+      cursor:pointer;
+      padding: 11px 14px;
+      border-radius: 12px;
+      font-weight:900;
+      color:#fff;
+      background: rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.14);
+      transition: transform .12s ease, filter .12s ease, background .12s ease;
+      box-shadow: 0 10px 22px rgba(0,0,0,.22);
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+    }
+    .btn:hover{ transform: translateY(-1px); filter: brightness(1.03); }
+    .btn:active{ transform: translateY(0px) scale(.99); }
+
+    .btn-primary{ background: linear-gradient(180deg, var(--blue), var(--blue2)); border: 1px solid rgba(59,130,246,.45); }
+    .btn-success{ background: linear-gradient(180deg, #2dd46a, #16a34a); border: 1px solid rgba(34,197,94,.45); }
+    .btn-danger{ background: linear-gradient(180deg, #ff5a5a, #dc2626); border: 1px solid rgba(239,68,68,.45); }
+    .btn-muted{ background: rgba(255,255,255,.10); border:1px solid rgba(255,255,255,.14); color: rgba(255,255,255,.9); }
+    .btn-amber{ background: linear-gradient(180deg, #ffcc66, #f59e0b); border:1px solid rgba(245,158,11,.5); color:#1a1a1a; }
+    .btn-ghost{ background: transparent; border:1px solid rgba(255,255,255,.16); color: rgba(255,255,255,.88); box-shadow:none; }
+    .btn-champ{ background: linear-gradient(180deg, #ff7866, #f5360b); border:1px solid rgba(245,158,11,.5); color:#1a1a1a; }
+
+    .menu{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 880px){
+      .menu{ grid-template-columns: 1fr; }
+    }
+
+    /* ====== DAY SELECT ====== */
+    .dayGrid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 760px){
+      .dayGrid{ grid-template-columns: 1fr; }
+    }
+    .dayCard{
+      position:relative;
+      padding: 16px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      overflow:hidden;
+      cursor:pointer;
+      transition: transform .12s ease, filter .12s ease, background .12s ease;
+    }
+    .dayCard:hover{ transform: translateY(-1px); background: rgba(255,255,255,.09); }
+    .dayCard h3{
+      margin:0;
+      font-size: 1.2rem;
+      color: var(--gold2);
+      letter-spacing:.2px;
+    }
+    .dayCard p{
+      margin:8px 0 0;
+      color: var(--muted);
+      line-height:1.35;
+    }
+    .dayTag{
+      position:absolute;
+      right: 12px;
+      top: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: 12px;
+      background: rgba(255,215,0,.10);
+      border:1px solid rgba(255,215,0,.30);
+      color: var(--gold2);
+      white-space:nowrap;
+    }
+
+    /* ====== FORMS ====== */
+    form{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    @media (max-width: 760px){
+      form{ grid-template-columns: 1fr; }
+    }
+    .field{
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+    }
+    label{
+      font-weight:900;
+      color: rgba(255,255,255,.85);
+      font-size: 13px;
+    }
+    input{
+      width:100%;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.20);
+      color: #fff;
+      outline:none;
+    }
+    input::placeholder{ color: rgba(255,255,255,.55); }
+    input:focus{
+      border-color: rgba(255,215,0,.45);
+      box-shadow: 0 0 0 4px rgba(255,215,0,.12);
+    }
+
+    .formActions{
+      grid-column: 1 / -1;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-start;
+      margin-top: 2px;
+    }
+
+    /* ====== TEAMS LIST ====== */
+    ul{ list-style:none; padding:0; margin: 12px 0 0; }
+
+    li{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      margin-bottom: 10px;
+      overflow:hidden;
+    }
+    .teamLeft{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+      flex:1;
+    }
+    .teamLeft img{
+      width:52px; height:52px;
+      border-radius: 12px;
+      object-fit:cover;
+      border: 1px solid rgba(255,255,255,.16);
+      background:#fff;
+    }
+    .teamLeft .meta{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+    }
+    .teamLeft .name{
+      font-weight: 950;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      font-size: 16px;
+    }
+    .teamLeft .status{
+      color: rgba(255,255,255,.72);
+      font-weight: 800;
+      font-size: 12px;
+    }
+    .actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .btn-sm{
+      padding: 9px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      box-shadow:none;
+    }
+
+    /* ====== DETAILS BOX ====== */
+    .details{
+      margin-top: 12px;
+      display:flex;
+      gap: 14px;
+      flex-wrap:wrap;
+      align-items:flex-start;
+    }
+    .details img{
+      width: 110px;
+      height: 110px;
+      border-radius: 18px;
+      object-fit: cover;
+      border: 1px solid rgba(255,255,255,.16);
+      background:#fff;
+    }
+    .details .box{
+      flex:1;
+      min-width: 240px;
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .details .box h3{
+      margin:0 0 8px;
+      color: var(--gold2);
+    }
+    .details .box p{
+      margin: 6px 0 0;
+      color: rgba(255,255,255,.85);
+    }
+
+    /* ====== FOOT NOTE ====== */
+    .hint{
+      margin-top: 10px;
+      color: rgba(255,255,255,.72);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="brand">
+      <h1>🏆 Sistema de Campeonatos</h1>
+      <div class="pill" id="dayPill">Dia: <small>—</small></div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- ====== SELEÇÃO DO DIA ====== -->
+    <div id="teamSelection" class="panel">
+      <div class="panelHeader">
+        <div>
+          <h2>Selecione o dia do torneio</h2>
+          <p>Os dados ficam separados por dia (times, sorteios e estado do campeonato).</p>
+        </div>
+      </div>
+
+      <div class="dayGrid">
+        <div class="dayCard" onclick="goToMenu('sabado')">
+          <div class="dayTag">SÁBADO</div>
+          <h3>Sábado — 31/01</h3>
+          <p>Gerencie times, confrontos 2x2 ou 4x4.</p>
+        </div>
+
+        <div class="dayCard" onclick="goToMenu('domingo')">
+          <div class="dayTag">DOMINGO</div>
+          <h3>Domingo — 01/02</h3>
+          <p>Gerencie times, confrontos 2x2 ou 4x4.</p>
+        </div>
+      </div>
+
+      <div class="hint">Dica: se você abrir telas de apresentação em outra aba, elas seguem o dia selecionado.</div>
+    </div>
+
+    <!-- ====== MENU ====== -->
+    <div id="menu" class="panel hidden">
+      <div class="panelHeader">
+        <div>
+          <h2>Menu</h2>
+          <p>Escolha uma ação para o dia atual.</p>
+        </div>
+        <div class="right">
+          <button class="btn btn-ghost" type="button" onclick="backToDaySelect()">Trocar dia</button>
+        </div>
+      </div>
+
+      <div class="menu">
+        <button class="btn btn-primary" onclick="openTeamRegistration()">👥 Cadastrar Times</button>
+        <button class="btn btn-muted"   onclick="viewTeams()">📋 Ver Times Cadastrados</button>
+        <button class="btn btn-amber"   onclick="createDesignation()">⚔️ Confronto 2x2</button>
+        <button class="btn btn-amber"   onclick="createSelecao()">⚔️ Confronto 4x4</button>
+        <!-- <button class="btn btn-champ"   onclick="openChamp2()">▶️ Campeonato 2x2</button>
+        <button class="btn btn-champ"   onclick="openChamp4()">▶️ Campeonato 4x4</button> -->
+      </div>
+    </div>
+
+    <!-- ====== CADASTRAR TIMES ====== -->
+    <div id="teamRegistration" class="panel hidden">
+      <div class="panelHeader">
+        <div>
+          <h2>Cadastrar times</h2>
+          <p>Cadastre até 24 times para o dia selecionado. A logo pode ser imagem enviada (base64).</p>
+        </div>
+        <div class="right">
+          <button class="btn btn-ghost" type="button" onclick="returnToMenu()">Voltar</button>
+        </div>
+      </div>
+
+      <form id="teamForm">
+        <div class="field">
+          <label for="teamName">Nome do time</label>
+          <input type="text" id="teamName" placeholder="Ex.: E.C LEÃO 70" required />
+        </div>
+
+        <div class="field">
+          <label for="teamLogo">Logo (imagem)</label>
+          <input type="file" id="teamLogo" accept="image/*" required />
+        </div>
+
+        <div class="formActions">
+          <button class="btn btn-success" type="submit">✅ Cadastrar Time</button>
+          <button class="btn btn-muted" type="button" onclick="viewTeams()">📋 Ver Times</button>
+        </div>
+      </form>
+
+      <div class="hint">Se já existir uma lista salva para este dia, ela será carregada automaticamente.</div>
+    </div>
+
+    <!-- ====== VER TIMES ====== -->
+    <div id="viewTeams" class="panel hidden">
+      <div class="panelHeader">
+        <div>
+          <h2>Times cadastrados</h2>
+          <p>Editar, excluir ou ver detalhes.</p>
+        </div>
+        <div class="right">
+          <button class="btn btn-ghost" type="button" onclick="returnToMenu()">Voltar</button>
+        </div>
+      </div>
+
+      <ul id="teamList"></ul>
+    </div>
+
+    <!-- ====== DETALHES ====== -->
+    <div id="teamDetails" class="panel hidden">
+      <div class="panelHeader">
+        <div>
+          <h2>Detalhes do time</h2>
+          <p>Informações do cadastro.</p>
+        </div>
+        <div class="right">
+          <button class="btn btn-ghost" type="button" onclick="returnToMenu()">Voltar</button>
+        </div>
+      </div>
+
+      <div id="teamInfo"></div>
+    </div>
+
+    <!-- ====== DESIGNATION (placeholder) ====== -->
+    <div id="designation" class="panel hidden">
+      <div class="panelHeader">
+        <div>
+          <h2>Designação dos times</h2>
+          <p>Esta etapa normalmente é feita na página /times.</p>
+        </div>
+        <div class="right">
+          <button class="btn btn-ghost" type="button" onclick="returnToMenu()">Voltar</button>
+        </div>
+      </div>
+
+      <div class="hint">Abra /times para montar o confronto 2x2 e salvar a designação.</div>
+      <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-success" type="button" onclick="saveDesignation()">💾 Salvar Designação</button>
+      </div>
+    </div>
+
+    <!-- ====== START CUP (placeholder) ====== -->
+    <div id="startCup" class="panel hidden">
+      <div class="panelHeader">
+        <div>
+          <h2>Fases da Copa</h2>
+          <p>Visualização/atalho.</p>
+        </div>
+        <div class="right">
+          <button class="btn btn-ghost" type="button" onclick="returnToMenu()">Voltar</button>
+        </div>
+      </div>
+
+      <div id="tournamentBracket"></div>
+    </div>
+
+  </div>
+
+  <script>
+    // =============================
+    // LIMITES
+    // =============================
+    const MAX_TEAMS = 24;        // quantidade máxima de times cadastrados
+    const REQUIRED_SLOTS = 12;   // quantidade de slots que precisam estar preenchidos
+
+    // =============================
+    // CHAVES POR DIA (SAB/DOM)
+    // =============================
+    let currentDay = localStorage.getItem("currentDay") || null;
+
+    function normalizeDay(d){
+      return (d || "").toString().trim().toLowerCase();
+    }
+
+    function getDay() {
+      return normalizeDay(localStorage.getItem("currentDay") || currentDay || "sabado");
+    }
+
+    function setDay(day){
+      currentDay = normalizeDay(day);
+      localStorage.setItem("currentDay", currentDay);
+      paintDayPill();
+    }
+
+    function paintDayPill(){
+      const day = getDay();
+      const label = (day === "domingo") ? "Domingo" : "Sábado";
+      document.getElementById("dayPill").innerHTML = `Dia: <small>${label}</small>`;
+    }
+
+    function teamsKey()       { return `teams-${getDay()}`; }
+    function designationKey() { return `designation-${getDay()}`; }
+    function cupKey()         { return `cupState-${getDay()}`; }
+    function slotKey(id)      { return `slot-${getDay()}-${id}`; }
+
+    // =============================
+    // DADOS (DEFAULT) COM DIA
+    // =============================
+    // ✅ Ajuste o playDay como quiser: "sabado", "domingo" (ou "ambos")
+    // Aqui estão 12 no sábado e 12 no domingo.
+    const defaultTeams = [
+      // ===== SÁBADO (12) =====
+      { name: "E.C LEÃO 70",          logo: "/static/logos/LEAO.png",             status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "sabado" },
+      { name: "AMIGOS DA ANTIGA",     logo: "/static/logos/ADA.png",           status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "sabado" },
+      { name: "GTX",                  logo: "/static/logos/GTX.png",              status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "sabado" },
+      { name: "ARSENAL GUARULHOS",    logo: "/static/logos/ARSENAL_GUARULHOS.png", status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "sabado" },
+      { name: "SÓ MALOKA",            logo: "/static/logos/SO_MALOKA.png",         status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "sabado" },
+      { name: "ESPADA DE OURO",       logo: "/static/logos/ESPADA_DE_OURO.png",    status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "sabado" },
+      { name: "S.C. XI GAROTOS",      logo: "/static/logos/XI_GAROTOS.png",        status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "sabado" },
+      { name: "LA MAFIA F.C",         logo: "/static/logos/LA_MAFIA.png",          status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "sabado" },
+      { name: "MONTE SANTO",          logo: "/static/logos/MONTE_SANTO.png",       status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "sabado" },
+      { name: "TRADIÇÃO PERUS",       logo: "/static/logos/TRADICAO_ZO.png",       status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "sabado" },
+      { name: "VILA LUIZA F.C",       logo: "/static/logos/VILA_LUIZA.png",        status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "sabado" },
+      { name: "E.C. NOROESTE",        logo: "/static/logos/NOROESTE.png",          status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "sabado" },
+
+      // ===== DOMINGO (12) =====
+      { name: "FUT BEC",               logo: "/static/logos/FUTBEC.png",            status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "domingo" },
+      { name: "PSG",                  logo: "/static/logos/SELECAO_GUARULHOS.png",              status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "domingo" },
+      { name: "CAIXA BAIXA",          logo: "/static/logos/CAIXA_BAIXA.png",       status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "domingo" },
+      { name: "NINGUÉM BOM",          logo: "/static/logos/NINGUEM_BOM.png",       status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "domingo" },
+      { name: "OS LAGOAS",            logo: "/static/logos/OS_LAGOAS.png",         status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "domingo" },
+      { name: "PURA CALMA",           logo: "/static/logos/PURA_CALMA.png",        status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "domingo" },
+      { name: "SCF ESQUADRÃO",        logo: "/static/logos/ESQUADRAO.png",         status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "domingo" },
+      { name: "AJAX F.C",             logo: "/static/logos/AJAX.png",             status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "domingo" },
+      { name: "SÓ CACHAÇA",           logo: "/static/logos/SO_CACHACA.png",        status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "domingo" },
+      { name: "CONFIANÇA",            logo: "/static/logos/CONFIANCA.png",         status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "domingo" },
+      { name: "DIAMANTE",             logo: "/static/logos/DIAMANTE.png",          status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "domingo" },
+      { name: "FOGO NA BOMBA",        logo: "/static/logos/FOGO_NA_BOMBA.png",     status: "Ativo", eliminatedIn: null, eliminatedBy: null, playDay: "domingo" }
+    ];
+
+    function teamBelongsToCurrentDay(team){
+      const d = getDay();
+      const td = normalizeDay(team?.playDay);
+      // compatibilidade: se não tiver playDay, considera do dia atual
+      if (!td) return true;
+      return td === d || td === "ambos";
+    }
+
+    let teams = [];
+    let designation = []; // reservado
+
+    // =============================
+    // LOCALSTORAGE (POR DIA)
+    // =============================
+    function saveTeamsToLocalStorage() {
+      // garante que só salva o que pertence ao dia atual
+      const cleaned = (teams || []).filter(teamBelongsToCurrentDay).slice(0, MAX_TEAMS);
+      teams = cleaned;
+      localStorage.setItem(teamsKey(), JSON.stringify(cleaned));
+    }
+
+    function loadTeamsFromLocalStorage() {
+      const key = teamsKey();
+      const stored = localStorage.getItem(key);
+
+      try {
+        if (stored) {
+          const parsed = JSON.parse(stored);
+
+          if (Array.isArray(parsed)) {
+            // ✅ filtra pra garantir que só aparecem times do dia certo
+            teams = parsed.filter(teamBelongsToCurrentDay).slice(0, MAX_TEAMS);
+            // re-salva “limpo”
+            localStorage.setItem(key, JSON.stringify(teams));
+            return;
+          }
+        }
+      } catch (e) {
+        // JSON corrompido -> cai no default
+      }
+
+      // ✅ Default filtrado por dia
+      teams = defaultTeams
+        .filter(t => normalizeDay(t.playDay) === getDay() || normalizeDay(t.playDay) === "ambos")
+        .slice(0, MAX_TEAMS);
+
+      saveTeamsToLocalStorage();
+    }
+
+    // =============================
+    // UI HELPERS
+    // =============================
+    function showOnly(id){
+      const sections = document.querySelectorAll(".container > div");
+      sections.forEach(s => s.classList.add("hidden"));
+      document.getElementById(id).classList.remove("hidden");
+    }
+
+    function backToDaySelect(){
+      showOnly("teamSelection");
+    }
+
+    // =============================
+    // NAVEGAÇÃO
+    // =============================
+    function goToMenu(day) {
+      setDay(day);
+      loadTeamsFromLocalStorage();
+      showOnly("menu");
+    }
+
+    function openTeamRegistration() {
+      showOnly("teamRegistration");
+    }
+
+    function returnToMenu() {
+      showOnly("menu");
+    }
+
+    // =============================
+    // CRUD TIMES
+    // =============================
+    document.getElementById("teamForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      loadTeamsFromLocalStorage(); // garante que está carregado do dia atual
+
+      const name = document.getElementById("teamName").value.trim();
+      const logoFile = document.getElementById("teamLogo").files[0];
+
+      if (!name || !logoFile) return;
+
+      if (teams.length >= MAX_TEAMS) {
+        alert(`Já foram cadastrados ${MAX_TEAMS} times!`);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function (evt) {
+        teams.push({
+          name,
+          logo: evt.target.result,
+          status: "Ativo",
+          eliminatedIn: null,
+          eliminatedBy: null,
+          playDay: getDay() // ✅ salva no dia correto
+        });
+
+        saveTeamsToLocalStorage();
+        alert("Time cadastrado com sucesso!");
+
+        document.getElementById("teamName").value = "";
+        document.getElementById("teamLogo").value = "";
+      };
+      reader.readAsDataURL(logoFile);
+    });
+
+    function viewTeams() {
+      loadTeamsFromLocalStorage(); // sempre recarrega antes de listar
+      showOnly("viewTeams");
+
+      const teamList = document.getElementById("teamList");
+      teamList.innerHTML = "";
+
+      teams.forEach((team, index) => {
+        const dia = normalizeDay(team.playDay) || getDay();
+        const diaLabel = (dia === "domingo") ? "Domingo" : "Sábado";
+
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <div class="teamLeft">
+            <img src="${team.logo}" alt="${team.name}">
+            <div class="meta">
+              <div class="name" title="${team.name}">${team.name}</div>
+              <div class="status">Status: ${team.status} • Dia: ${diaLabel}</div>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-sm btn-amber" type="button" onclick="editTeam(${index})">Editar</button>
+            <button class="btn btn-sm btn-danger" type="button" onclick="deleteTeam(${index})">Excluir</button>
+            <button class="btn btn-sm btn-muted" type="button" onclick="viewTeamDetails(${index})">Detalhes</button>
+          </div>
+        `;
+        teamList.appendChild(li);
+      });
+
+      if(!teams.length){
+        teamList.innerHTML = `<div class="waiting" style="margin-top:12px;">Nenhum time cadastrado ainda.</div>`;
+      }
+    }
+
+    function editTeam(index) {
+      const newName = prompt("Edite o nome do time:", teams[index].name);
+      if (newName && newName.trim()) {
+        teams[index].name = newName.trim();
+        if (!teams[index].playDay) teams[index].playDay = getDay(); // compat
+        saveTeamsToLocalStorage();
+        alert("Time atualizado com sucesso!");
+        viewTeams();
+      }
+    }
+
+    function deleteTeam(index) {
+      if (confirm("Tem certeza que deseja excluir este time?")) {
+        teams.splice(index, 1);
+        saveTeamsToLocalStorage();
+        alert("Time excluído com sucesso!");
+        viewTeams();
+      }
+    }
+
+    function viewTeamDetails(index) {
+      loadTeamsFromLocalStorage();
+      showOnly("teamDetails");
+
+      const team = teams[index];
+      const dia = normalizeDay(team.playDay) || getDay();
+      const diaLabel = (dia === "domingo") ? "Domingo" : "Sábado";
+
+      const teamInfo = document.getElementById("teamInfo");
+
+      teamInfo.innerHTML = `
+        <div class="details">
+          <img src="${team.logo}" alt="${team.name}">
+          <div class="box">
+            <h3>${team.name}</h3>
+            <p><strong>Dia:</strong> ${diaLabel}</p>
+            <p><strong>Status:</strong> ${team.status}</p>
+            ${
+              team.status === "Eliminado"
+                ? `<p><strong>Eliminado na fase:</strong> ${team.eliminatedIn}</p>
+                   <p><strong>Eliminado por:</strong> ${team.eliminatedBy}</p>`
+                : ""
+            }
+          </div>
+        </div>
+      `;
+    }
+
+    // =============================
+    // CONFRONTO / DESIGNATION
+    // =============================
+    function createDesignation() {
+      loadTeamsFromLocalStorage();
+      if (teams.length < REQUIRED_SLOTS) {
+        alert(`Você precisa ter pelo menos ${REQUIRED_SLOTS} times cadastrados para montar o confronto.`);
+        return;
+      }
+      window.location.href = "/times";
+    }
+
+    function saveDesignation() {
+      alert("Designação salva com sucesso!");
+      returnToMenu();
+    }
+
+    // ✅ Agora valida 12 slots (6 esquerda + 6 direita)
+    function isDesignationComplete() {
+      const slotIds = [
+        "left1-1","left1-2","left2-1","left2-2","left3-1","left3-2",
+        "right1-1","right1-2","right2-1","right2-2","right3-1","right3-2"
+      ];
+
+      const packed = localStorage.getItem(designationKey());
+      if (packed) {
+        try {
+          const obj = JSON.parse(packed);
+          return slotIds.every(id => obj[id] && obj[id].name && obj[id].logo);
+        } catch (e) {}
+      }
+
+      return slotIds.every(id => {
+        const v = localStorage.getItem(slotKey(id));
+        if (!v) return false;
+        const t = JSON.parse(v);
+        return t && t.name && t.logo;
+      });
+    }
+
+    // =============================
+    // seleção 4x4
+    // =============================
+    function createSelecao() {
+      loadTeamsFromLocalStorage();
+      if (teams.length < REQUIRED_SLOTS) {
+        alert(`Você precisa ter pelo menos ${REQUIRED_SLOTS} times cadastrados para montar o confronto.`);
+        return;
+      }
+      window.location.href = "/selecao";
+    }
+
+    // =============================
+    // ABRIR CAMPEONATO 2x2
+    // =============================
+    function openChamp2() {
+      const d = getDay();
+      localStorage.setItem("currentDay", d);
+      localStorage.setItem("cupActiveDay", d);
+
+      // valida se a designação do dia está completa (12 slots preenchidos)
+      if (!isDesignationComplete()) {
+        alert(`Você precisa preencher todos os ${REQUIRED_SLOTS} slots do Confronto 2x2 (${d === "domingo" ? "Domingo" : "Sábado"}) antes de abrir o campeonato.`);
+        return;
+      }
+
+      // limpa estado antigo do campeonato DESSE dia
+      localStorage.removeItem(cupKey());
+
+      window.location.href = "/campeonato";
+    }
+
+    // =============================
+    // ABRIR CAMPEONATO 4x4
+    // =============================
+    function openChamp4() {
+      window.location.href = "/selecao_camp";
+    }
+
+    // =============================
+    // INIT
+    // =============================
+    (function init() {
+      paintDayPill();
+
+      // Se já tinha dia escolhido antes, pode ir direto pro menu
+      const day = localStorage.getItem("currentDay");
+      if (day) {
+        setDay(day);
+        loadTeamsFromLocalStorage();
+        showOnly("menu");
+      } else {
+        showOnly("teamSelection");
+      }
+    })();
+  </script>
+</body>
+</html>
