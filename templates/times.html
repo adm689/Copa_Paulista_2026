@@ -722,7 +722,7 @@
     });
   }
 
-  function drawRandom(){
+    function drawRandom(){
     loadTeamsFromLocalStorage();
     if (!teams.length){
       alert(`Não há times cadastrados para ${dayLabel(dayKey())}. Cadastre times para este dia primeiro.`);
@@ -757,21 +757,21 @@
 
     const team = availableTeams[Math.floor(Math.random() * availableTeams.length)];
 
-      // histórico (para desfazer)
-      pushHistory({
-        ts: Date.now(),
-        slotId: nextSlot,
-        prev: null,
-        next: team
-      });
-  
-      localStorage.setItem(slotKey(nextSlot), JSON.stringify(team));
-      renderSlot(nextSlot, team);
-  
-      saveDesignation({ silent: true });
-      selectedSlot = null;
-      loadTeams();
+    // histórico (para desfazer)
+    pushHistory({
+      ts: Date.now(),
+      slotId: nextSlot,
+      prev: null,
+      next: team
+    });
 
+    localStorage.setItem(slotKey(nextSlot), JSON.stringify(team));
+    renderSlot(nextSlot, team);
+
+    saveDesignation({ silent: true });
+    selectedSlot = null;
+    loadTeams();
+  }
 
   function drawRandomAll(){
     loadTeamsFromLocalStorage();
@@ -789,7 +789,7 @@
       if (!ok) return;
     }
 
-     const shuffled = shuffleArray(teams).slice(0, slotIds.length);
+    const shuffled = shuffleArray(teams).slice(0, slotIds.length);
 
     // começa um histórico novo para esse sorteio
     setHistory([]);
@@ -814,8 +814,8 @@
     loadTeams();
 
     alert(`Sorteio concluído! (${dayLabel(dayKey())})`);
-
   }
+
 
   // =============================
   // INIT + mudança de dia em outra aba
@@ -846,4 +846,5 @@
 
 </body>
 </html>
+
 
