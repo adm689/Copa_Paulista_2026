@@ -159,6 +159,7 @@
     .btn-present{ background:#ffaa00; color:#fff; }
     .btn-champ{ background:#007bff; color:#fff; }
     .btn-back{ background:#6c757d; color:#fff; }
+    .btn-undo{ background:#17a2b8; color:#fff; }
 
     @media (max-width: 900px){
       .group-slots{ grid-template-columns: repeat(2, minmax(0,1fr)); }
@@ -222,7 +223,8 @@
 
   <div class="actions">
     <button class="btn-save" onclick="saveDesignation()">Salvar</button>
-    <button class="btn-clear" onclick="clearDesignation()">Limpar</button>
+    <button class="btn-clear" onclick="clearDesignation()">Limpar Todos</button>
+    <button class="btn-undo" onclick="undoLastSelection()">Limpar último</button>
     <button class="btn-draw" onclick="drawRandom()">Sortear 1</button>
     <button class="btn-draw" onclick="drawRandomAll()">Sortear Todos</button>
     <button class="btn-present" onclick="openPresentation()">Apresentação</button>
@@ -344,6 +346,35 @@
   function slotKey(slotId){ return `slot-${dayKey()}-${slotId}`; }
   function designationKey(){ return `designation-${dayKey()}`; }
 
+    // =============================
+  // DESFAZER (histórico por dia)
+  // =============================
+  function historyKey(){ return `slotHistory-${dayKey()}`; }
+
+  function getHistory(){
+    const raw = localStorage.getItem(historyKey());
+    if (!raw) return [];
+    try {
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function setHistory(arr){
+    localStorage.setItem(historyKey(), JSON.stringify(arr || []));
+  }
+
+  function pushHistory(entry){
+    const hist = getHistory();
+    hist.push(entry);
+    setHistory(hist);
+  }
+
+  // =============================
+  // Render Slot
+  // =============================
   function renderSlot(slotId, team){
     const el = document.getElementById(slotId);
     if (!el) return;
@@ -416,7 +447,7 @@
     }
   }
 
-  function selectTeam(index){
+    function selectTeam(index){
     if (!selectedSlot) {
       alert("Selecione um slot antes de atribuir o time.");
       return;
@@ -424,8 +455,23 @@
 
     const team = teams[index];
 
-    // ✅ força salvar com playDay (pra compatibilizar com suas outras telas)
+    // snapshot do que existia no slot (se houver)
+    let prev = null;
+    const prevRaw = localStorage.getItem(slotKey(selectedSlot));
+    if (prevRaw) {
+      try { prev = JSON.parse(prevRaw); } catch {}
+    }
+
+    // ✅ força salvar com playDay
     const toSave = { name: team.name, logo: team.logo, playDay: dayKey() };
+
+    // registra no histórico (para desfazer)
+    pushHistory({
+      ts: Date.now(),
+      slotId: selectedSlot,
+      prev: (prev && prev.name && prev.logo) ? prev : null,
+      next: toSave
+    });
 
     localStorage.setItem(slotKey(selectedSlot), JSON.stringify(toSave));
     renderSlot(selectedSlot, toSave);
@@ -434,8 +480,10 @@
     if (el) el.classList.remove("selected");
     selectedSlot = null;
 
+    saveDesignation({ silent: true }); // mantém pacote atualizado
     loadTeams();
   }
+
 
   function saveDesignation({ silent = false } = {}){
     const designation = {};
@@ -510,6 +558,8 @@
     localStorage.removeItem("champState");
     localStorage.removeItem("bracketState");
     localStorage.removeItem("designation");
+    localStorage.removeItem(`slotHistory-${day}`);
+
 
     for (let i = localStorage.length - 1; i >= 0; i--){
       const k = localStorage.key(i);
@@ -615,6 +665,14 @@
 
     const toSave = { name: team.name, logo: team.logo, playDay: dayKey() };
 
+    // histórico (undo)
+    pushHistory({
+      ts: Date.now(),
+      slotId: nextSlot,
+      prev: null,
+      next: toSave
+    });
+
     localStorage.setItem(slotKey(nextSlot), JSON.stringify(toSave));
     renderSlot(nextSlot, toSave);
 
@@ -643,9 +701,20 @@
 
     const shuffled = shuffleArray(teams).slice(0, slotIds.length);
 
+    // começa um histórico novo para esse sorteio
+    setHistory([]);
+
     slotIds.forEach((slotId, idx) => {
       const team = shuffled[idx];
       const toSave = { name: team.name, logo: team.logo, playDay: dayKey() };
+
+      pushHistory({
+        ts: Date.now(),
+        slotId,
+        prev: null,
+        next: toSave
+      });
+
       localStorage.setItem(slotKey(slotId), JSON.stringify(toSave));
       renderSlot(slotId, toSave);
     });
@@ -659,6 +728,46 @@
 
     alert(`Sorteio concluído! (${dayLabel(dayKey())})\nSlots preenchidos: ${slotIds.length}/${slotIds.length}`);
   }
+
+  // =========================
+  // DESFAZER ULTIMA SELEÇÃO DE TIME
+  // =========================
+
+    function undoLastSelection(){
+    const hist = getHistory();
+    if (!hist.length) {
+      alert("Não há nenhuma ação para desfazer neste dia.");
+      return;
+    }
+
+    const last = hist.pop();
+    setHistory(hist);
+
+    const { slotId, prev } = last || {};
+    if (!slotId) return;
+
+    if (prev && prev.name && prev.logo) {
+      // volta o que estava antes
+      localStorage.setItem(slotKey(slotId), JSON.stringify(prev));
+      renderSlot(slotId, prev);
+    } else {
+      // limpa o slot
+      localStorage.removeItem(slotKey(slotId));
+      renderSlot(slotId, null);
+    }
+
+    // se estava selecionado, tira seleção
+    if (selectedSlot === slotId) {
+      const el = document.getElementById(selectedSlot);
+      if (el) el.classList.remove("selected");
+      selectedSlot = null;
+    }
+
+    saveDesignation({ silent: true });
+    loadTeams();
+  }
+
+  
 
   // ====== APRESENTAÇÃO ======
   let presentationWindow = null;
@@ -743,3 +852,4 @@
 
 </body>
 </html>
+
