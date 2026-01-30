@@ -184,6 +184,7 @@
     .btn-present{ background:#f59e0b; color:#ffffff; }
     .btn-champ{ background:#0b59f5; color:#ffffff; }
     .btn-back{ background:#6c757d; color:#fff; }
+    .btn-undo{ background:#17a2b8; color:#fff; }
 
     .hint{
       margin-top: 10px;
@@ -264,7 +265,8 @@
 
   <div class="actions">
     <button class="btn-save" onclick="saveDesignation()">Salvar</button>
-    <button class="btn-clear" onclick="clearDesignation()">Limpar</button>
+    <button class="btn-clear" onclick="clearDesignation()">Limpar Todos</button>
+    <button class="btn-undo" onclick="undoLastSelection()">Limpar Último</button>
     <button class="btn-draw" onclick="drawRandom()">Sortear 1</button>
     <button class="btn-draw" onclick="drawRandomAll()">Sortear Todos</button>
     <button class="btn-present" onclick="openPresentation()">Apresentação</button>
@@ -339,6 +341,66 @@
   function slotKey(slotId){ return `slot-${dayKey()}-${slotId}`; }
   function designationKey(){ return `designation-${dayKey()}`; }
 
+    // =============================
+  // DESFAZER (histórico por dia)
+  // =============================
+  function historyKey(){ return `slotHistory-${dayKey()}`; }
+
+  function getHistory(){
+    const raw = localStorage.getItem(historyKey());
+    if (!raw) return [];
+    try {
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function setHistory(arr){
+    localStorage.setItem(historyKey(), JSON.stringify(arr || []));
+  }
+
+  function pushHistory(entry){
+    const hist = getHistory();
+    hist.push(entry);
+    setHistory(hist);
+  }
+
+  function undoLastSelection(){
+    const hist = getHistory();
+    if (!hist.length) {
+      alert("Não há nenhuma ação para desfazer neste dia.");
+      return;
+    }
+
+    const last = hist.pop();
+    setHistory(hist);
+
+    const { slotId, prev } = last || {};
+    if (!slotId) return;
+
+    if (prev && prev.name && prev.logo) {
+      localStorage.setItem(slotKey(slotId), JSON.stringify(prev));
+      renderSlot(slotId, prev);
+    } else {
+      localStorage.removeItem(slotKey(slotId));
+      renderSlot(slotId, null);
+    }
+
+    if (selectedSlot === slotId) {
+      const el = document.getElementById(selectedSlot);
+      if (el) el.classList.remove("selected");
+      selectedSlot = null;
+    }
+
+    saveDesignation({ silent: true });
+    loadTeams();
+  }
+
+   //====================================
+  // Render Slot
+  //=====================================
   function renderSlot(slotId, team){
     const el = document.getElementById(slotId);
     if (!el) return;
@@ -415,13 +477,29 @@
     }
   }
 
-  function selectTeam(index){
+    function selectTeam(index){
     if (!selectedSlot){
       alert("Selecione um slot antes de atribuir o time.");
       return;
     }
 
     const team = teams[index];
+
+    // snapshot do que existia no slot (se houver)
+    let prev = null;
+    const prevRaw = localStorage.getItem(slotKey(selectedSlot));
+    if (prevRaw) {
+      try { prev = JSON.parse(prevRaw); } catch {}
+    }
+
+    // histórico (para desfazer)
+    pushHistory({
+      ts: Date.now(),
+      slotId: selectedSlot,
+      prev: (prev && prev.name && prev.logo) ? prev : null,
+      next: team
+    });
+
     localStorage.setItem(slotKey(selectedSlot), JSON.stringify(team));
     renderSlot(selectedSlot, team);
 
@@ -429,8 +507,10 @@
     if (el) el.classList.remove("selected");
     selectedSlot = null;
 
+    saveDesignation({ silent: true });
     loadTeams();
   }
+
 
   function saveDesignation({ silent = false } = {}){
     const designation = {};
@@ -522,6 +602,8 @@
     legacySlotIds.forEach(id => localStorage.removeItem(`slot-${day}-${id}`));
 
     localStorage.removeItem(`designation-${day}`);
+    localStorage.removeItem(`slotHistory-${day}`);
+
 
     resetDayTournamentState(day);
 
@@ -675,13 +757,21 @@
 
     const team = availableTeams[Math.floor(Math.random() * availableTeams.length)];
 
-    localStorage.setItem(slotKey(nextSlot), JSON.stringify(team));
-    renderSlot(nextSlot, team);
+      // histórico (para desfazer)
+      pushHistory({
+        ts: Date.now(),
+        slotId: nextSlot,
+        prev: null,
+        next: team
+      });
+  
+      localStorage.setItem(slotKey(nextSlot), JSON.stringify(team));
+      renderSlot(nextSlot, team);
+  
+      saveDesignation({ silent: true });
+      selectedSlot = null;
+      loadTeams();
 
-    saveDesignation({ silent: true });
-    selectedSlot = null;
-    loadTeams();
-  }
 
   function drawRandomAll(){
     loadTeamsFromLocalStorage();
@@ -699,10 +789,21 @@
       if (!ok) return;
     }
 
-    const shuffled = shuffleArray(teams).slice(0, slotIds.length);
+     const shuffled = shuffleArray(teams).slice(0, slotIds.length);
+
+    // começa um histórico novo para esse sorteio
+    setHistory([]);
 
     slotIds.forEach((slotId, idx) => {
       const team = shuffled[idx];
+
+      pushHistory({
+        ts: Date.now(),
+        slotId,
+        prev: null,
+        next: team
+      });
+
       localStorage.setItem(slotKey(slotId), JSON.stringify(team));
       renderSlot(slotId, team);
     });
@@ -713,6 +814,7 @@
     loadTeams();
 
     alert(`Sorteio concluído! (${dayLabel(dayKey())})`);
+
   }
 
   // =============================
@@ -744,3 +846,4 @@
 
 </body>
 </html>
+
